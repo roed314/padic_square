@@ -1,6 +1,6 @@
 # Overall project description
 
-We are aiming to understand how various parameterizations of p-adic fields interact with Galois groups, ramification polygons, residual polygons, indices of inseparability and other invariants.
+We are aiming to understand how various parameterizations of p-adic fields interact with Galois groups, ramification polygons, residual polynomials, indices of inseparability and other invariants.
 
 # Subprojects
 
