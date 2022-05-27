@@ -6,6 +6,8 @@ We are aiming to understand how various parameterizations of p-adic fields inter
 
 ## Galois stratification of Monge varieties
 
+Monge's paper on cyclic extensions of degree p^2 works out an example.
+
 ## Higher ramification polygons
 
 Looking for more refined invariants to break up the Monge varieites into smaller pieces.
