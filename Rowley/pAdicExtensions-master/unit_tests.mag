@@ -1,0 +1,120 @@
+// Usage:
+// magma -b unit_tests.mag
+// 
+// This will run through a bunch of (K,n) pairs and check the invariants for extensions of K of degree n.
+// - Checks for consistency that the number of extensions agrees with Magma's NumberOfExtensions.
+// - Checks that NumberOfExtensions is well-behaved under refining an invariant
+// - Checks that #TemplateForEisensteinPolynomials is well-behaved under refining an invariant.
+
+SetDebugOnError(true);
+
+R<X> := PolynomialRing(Integers());
+
+for x in [
+  <pAdicField(2),[1,2,3,4,5,6,8,10,12,14,16]>,
+  <pAdicField(3),[1,2,3,4,5,6,9,12,15,18,27]>,
+  <pAdicField(5),[1,5,10,15,20,25]>,
+  <pAdicField(7),[1,6,7,14,21,28,35,42,49]>,
+  <ext<pAdicField(2) | 3>, [1,2,3,4,5,6,7,8]>,
+  <ext<pAdicField(3) | 2>, [1,3,6,9]>,
+  // <ext<pAdicField(7) | 3>, [1,7,14]>, // this is really slow, probably because the residue class field is quite big (7^3=343) and we loop over this in various places; this can certainly be improved
+  <ext<pAdicField(5,10) | X^2 - 5*X + 5>, [1,5,10]>,
+  <ext<pAdicField(3,10) | X^3 + 3*X + 3>, [1,3,6,9]>//,
+  // <ext<ext<pAdicField(3,10) | 3>| X^2+3>, [1,3,6,9]> // there is a bug in Magma's NumberOfExtensions (it calls InertiaDegree instead of AbsoluteInertiaDegree)
+  ] do
+  xK := x[1];
+  print "K =", xK;
+  K := TemplatepAdicField(xK);
+  IndentPush();
+  for n in x[2] do
+    print "n =", n;
+    IndentPush();
+    print "by J ...";
+    for J in OrePossibilities(K,n) do
+      nx := NumberOfExtensions(Integers(xK), n : j:=J, F:=1);
+      if nx ne &+[NumberOfExtensions(P) : P in AllRamificationPolygons(K, n : J0:=J)] then
+        print "FAIL";
+        print "J =", J;
+        quit;
+      end if;
+      if nx ne &+[NumberOfExtensions(P) : P in AllRamificationPolygons(K, n : J0:=J, Fine)] then
+        print "FAIL (fine)";
+        print "J =", J;
+        quit;
+      end if;
+      if nx ne &+[NumberOfExtensions(P) : P in AllRamificationPolygons(K, n : J0:=J, Fine, Res, Classes)] then
+        print "FAIL (res)";
+        print "J =", J;
+        quit;
+      end if;
+      if nx ne &+[NumberOfExtensions(P) : P in AllRamificationPolygons(K, n : J0:=J, Fine, URes, Classes)] then
+        print "FAIL (ures)";
+        print "J =", J;
+        quit;
+      end if;
+    end for;
+    print "by pgon";
+    for P in AllRamificationPolygons(K, n) do
+      Ps := AllRefinements(P);
+      if #TemplateForEisensteinPolynomials(P) ne &+[#TemplateForEisensteinPolynomials(P) : P in Ps] then
+        print "FAIL (num templ)";
+        print "P =", P;
+        quit;
+      end if;
+      if NumberOfExtensions(P) ne &+[NumberOfExtensions(P) : P in Ps] then
+        print "FAIL (num ext)";
+        print "P =", P;
+        quit;
+      end if;
+    end for;
+    print "by fine pgon ...";
+    for P in AllRamificationPolygons(K, n : Fine) do
+      Ps := WithAllResidues(P : Classes);
+      UPs := &cat[WithAllUniformizerResidues(P : Classes) : P in Ps];
+      if #TemplateForEisensteinPolynomials(P : Limit:="Disc") * EquivalenceClassSize(P)
+      ne &+[#TemplateForEisensteinPolynomials(P : Limit:="Disc") * EquivalenceClassSize(P) : P in UPs]
+      then
+        print "FAIL (num templ)";
+        print "P =", P;
+        quit;
+      end if;
+      if NumberOfExtensions(P) ne &+[NumberOfExtensions(P) : P in Ps] then
+        print "FAIL (num ext res)";
+        print "P =", P;
+        quit;
+      end if;
+      if NumberOfExtensions(P) ne &+[NumberOfExtensions(P) : P in UPs] then
+        print "FAIL (num ext ures)";
+        print "P =", P;
+        quit;
+      end if;
+    end for;
+    print "by residues ...";
+    for P in AllRamificationPolygons(K, n : Res, Classes) do
+      Ps := WithAllUniformizerResidues(P : Classes);
+      if NumberOfExtensions(P) ne &+[NumberOfExtensions(P) : P in Ps] then
+        print "FAIL (num ext)";
+        print "P =", P;
+        quit;
+      end if;
+    end for;
+    print "by uniformizer residue ...";
+    for P in AllRamificationPolygons(K, n : Res, URes, Classes) do
+      if EquivalenceClassSize(P) ne #EquivalenceClass(P) then
+        print "FAIL (equivalence class size)";
+        print "P =", P;
+        quit;
+      end if;
+      if exists{P : P1,P2 in EquivalenceClass(P) | not IsEquivalent(P1,P2)} then
+        print "FAIL (equivalent)";
+        print "P =", P;
+        quit;
+      end if;
+    end for;
+    IndentPop();
+  end for;
+  IndentPop();
+end for;
+
+print "ALL SUCCESSFUL";
+quit;

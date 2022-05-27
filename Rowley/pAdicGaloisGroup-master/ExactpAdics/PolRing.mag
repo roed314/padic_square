@@ -1,0 +1,129 @@
+import "../PolRing.mag": CERT;
+import "Field.mag": use_strategy;
+
+declare type PGGRngPolExact[PGGPolExact]: PGGRngPolWrap;
+declare attributes PGGRngPolExact: strategy;
+declare type PGGPolExact: PGGPolWrap;
+declare attributes PGGPolExact: strategy;
+
+intrinsic _PolynomialRing(F :: PGGFldExact) -> PGGRngPolExact
+  {The univariate polynomial ring over F.}
+  R := New(PGGRngPolExact);
+  R`actual := PolynomialRing(Actual(F));
+  R`base_ring := F;
+  return R;
+end intrinsic;
+
+intrinsic IsCoercible(R :: PGGRngPolExact, X) -> BoolElt, .
+  {True if X is coercible to an element of R.}
+  ok, Y := IsCoercible(Actual(R), X);
+  if ok then
+    f := New(PGGPolExact);
+    f`actual := Y;
+    f`parent := R;
+    return true, f;
+  else
+    return false, "not coercible to the actual ring" cat (assigned Y select ": " cat Y else "");
+  end if;
+end intrinsic;
+
+intrinsic IsCoercible(R :: PGGRngPolExact, X :: PGGPolExact) -> BoolElt, .
+  {"}
+  if Parent(X) eq R then
+    return true, X;
+  else
+    return IsCoercible(R, Actual(X));
+  end if;
+end intrinsic;
+
+intrinsic IsCoercible(R :: PGGRngPolExact, X :: []) -> BoolElt, .
+  {"}
+  ok, Y := CanChangeUniverse(X, BaseRing(R));
+  if ok then
+    return true, R ! Actual(R) ! [Actual(x) : x in Y];
+  else
+    return false, "coefficients not coercible to base ring" cat (assigned Y select ": " cat Y else "");
+  end if;
+end intrinsic;
+
+intrinsic PGG_Polynomial(f :: RngUPolElt_FldPadExact) -> PGGPol
+  {Converts f to a PGGPol.}
+  return PolynomialRing(PGGFldExact_Make(BaseRing(f))) ! f;
+end intrinsic;
+
+intrinsic 'eq'(R :: PGGRngPolExact, S :: PGGRngPolExact) -> BoolElt, .
+  {Equality.}
+  return Actual(R) eq Actual(S);
+end intrinsic;
+
+intrinsic Print(R :: PGGRngPolExact, lvl :: MonStgElt)
+  {Print.}
+  Print(Actual(R), lvl);
+end intrinsic;
+
+intrinsic Print(f :: PGGPolExact, lvl :: MonStgElt)
+  {"}
+  Print(Actual(f), lvl);
+end intrinsic;
+
+intrinsic Actual(R :: PGGRngPolExact) -> RngUPol_FldPadExact
+  {The actual ring.}
+  return R`actual;
+end intrinsic;
+
+intrinsic Actual(f :: PGGPolExact) -> RngUPolElt_FldPadExact
+  {The actual polynomial.}
+  return f`actual;
+end intrinsic;
+
+intrinsic PrecisionStrategy(R :: PGGRngPolExact) -> .
+  {The precision strategy to use with R.}
+  return use_strategy() select false else assigned R`strategy select R`strategy else PrecisionStrategy(BaseRing(R));
+end intrinsic;
+
+intrinsic PrecisionStrategy(f :: PGGPolExact) -> .
+  {The precision strategy to use with f.}
+  return use_strategy() select false else assigned f`strategy select f`strategy else PrecisionStrategy(Parent(f));
+end intrinsic;
+
+intrinsic _Factorization(f :: PGGPolExact : Extensions:=false) -> [], []
+  {Factorization.}
+  if use_strategy() then
+    facs0, _, certs0 := Factorization(Actual(f) : Extensions:=Extensions, Certificates, Strategy:=PrecisionStrategy(f));
+  else
+    facs0, _, certs0 := Factorization(Actual(f) : Extensions:=Extensions, Certificates);
+  end if;
+  assert forall{x : x in facs0 | x[2] eq 1};
+  facs := [Parent(f)| x[1] : x in facs0];
+  certs := [];
+  for c0 in certs0 do
+    c := rec<CERT | F:=c0`F, E:=c0`E, Rho:=Parent(f)!c0`Rho, Pi:=Parent(f)!c0`Pi>;
+    if Extensions then
+      c`Extension := PGGFldExact_Make(c0`Extension, BaseRing(f));
+    end if;
+    Append(~certs, c);
+  end for;
+  return facs, certs;
+end intrinsic;
+
+intrinsic _Degree(f :: PGGPolExact) -> RngIntElt
+  {The degree of f.}
+  return use_strategy() select Degree(Actual(f) : Strategy:=PrecisionStrategy(f)) else Degree(Actual(f));
+end intrinsic;
+
+intrinsic _Coefficients(f :: PGGPolExact) -> []
+  {The coefficients of f.}
+  return [BaseRing(f) | c : c in use_strategy() select Coefficients(Actual(f) : Strategy:=PrecisionStrategy(f)) else Coefficients(Actual(f))];
+end intrinsic;
+
+intrinsic _Roots(f :: PGGPolExact) -> []
+  {The roots of f.}
+  rs := Roots(Actual(f));
+  assert forall{r : r in rs | r[2] eq 1};
+  return [BaseRing(f)| r[1] : r in rs];
+end intrinsic;
+
+intrinsic AssignNames(~R :: PGGRngPolExact, names :: [MonStgElt])
+  {Assigns names to generators of R.}
+  AssignNames(~R`actual, names);
+end intrinsic;

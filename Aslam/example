@@ -1,0 +1,12 @@
+
+
+AttachSpec("spec_galois");
+K := pAdicField(3,20);
+x := PolynomialRing(K).1;
+f := x^9+27*x+3;
+g := x^27+27*x+3;
+G,_ := TwoSegmentsGaloisGroup_fast(f);
+H,_ := TwoSegmentsGaloisGroup_fast(g);
+Order(G);
+Order(H);
+

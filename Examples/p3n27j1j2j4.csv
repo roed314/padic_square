@@ -1,0 +1,9 @@
+p; n; j; ind of insep; polygon; residual poly; defining poly; automorphism; galois group; 
+p=3; n=27; j=1; I=[ 1, 1, 1, 0 ]; R=[ <1, 1>, <27, 0> ]; A=<t + 1>; f=x^27 + 6*x + 3; Aut=1T1; Gal=0T0
+p=3; n=27; j=1; I=[ 1, 1, 1, 0 ]; R=[ <1, 1>, <27, 0> ]; A=<t + 2>; f=x^27 + 3*x + 3; Aut=1T1; Gal=27T422
+p=3; n=27; j=2; I=[ 2, 2, 2, 0 ]; R=[ <1, 2>, <27, 0> ]; A=<t^2 + 1>; f=x^27 + 3*x^2 + 3; Aut=1T1; Gal=27T422
+p=3; n=27; j=2; I=[ 2, 2, 2, 0 ]; R=[ <1, 2>, <27, 0> ]; A=<t^2 + 2>; f=x^27 + 6*x^2 + 3; Aut=1T1; Gal=27T292
+p=3; n=27; j=4; I=[ 4, 4, 4, 0 ]; R=[ <1, 4>, <27, 0> ]; A=<t^2 + 1>; f=x^27 + 6*x^4 + 3; Aut=1T1; Gal=27T422
+p=3; n=27; j=4; I=[ 4, 4, 4, 0 ]; R=[ <1, 4>, <27, 0> ]; A=<t^2 + 2>; f=x^27 + 3*x^4 + 3; Aut=1T1; Gal=0T0
+
+[Interrupt twice in half a second; exiting]

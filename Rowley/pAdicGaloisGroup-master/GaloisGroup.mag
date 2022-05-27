@@ -1,0 +1,548 @@
+// implementation of a general galois-group finding algorithm, general in the sense that the algorithms involved are written in a modular fashion so that each piece can be changed independently of the rest, as far as possible
+
+import "Utils.mag": Q, Z, not_implemented, startswith;
+import "ArgSpec.mag": substitute, unpack_vars;
+
+declare verbose PGG_GaloisGroup, 2;
+
+declare type PGGAlg;
+
+declare type PGGAlgState;
+declare attributes PGGAlgState: algorithm;
+
+declare type PGGAlg_GaloisGroup: PGGAlg;
+
+function preparse_algorithm(x : Eval:=false, Prime:=false, Degree:=false)
+  function _preparse_algorithm(x)
+    nm := Name(x);
+    args := Arguments(x);
+    case Trim(nm):
+    when "!alias":
+      error if #args ne 3, "!alias: expecting 3 arguments: var, val, expr";
+      var, val, expr := Explode(args);
+      expr := _preparse_algorithm(expr);
+      A := AssociativeArray();
+      unpack_vars(~ok, ~A, var, _preparse_algorithm(val));
+      error if not ok, "!alias: unpacking error:", var;
+      ok, new_expr := substitute(A, expr);
+      error if not ok, "!alias: substitute error:", var;
+      return new_expr;
+    when "!macro":
+      not_implemented("!macro");
+    when "!seq":
+      error if #args ne 3, "!seq: expecting 3 arguments: var, vals, expr";
+      var, vals, expr := Explode(args);
+      error if #Trim(Name(vals)) ne 0, "!seq: second argument must be a sequence";
+      expr := _preparse_algorithm(expr);
+      new_exprs := [];
+      for val in Arguments(vals) do
+        A := AssociativeArray();
+        unpack_vars(~ok, ~A, var, _preparse_algorithm(val));
+        error if not ok, "!seq: unpacking error:", var, val;
+        ok, new_expr := substitute(A, expr);
+        error if not ok, "!seq: substitute error:", var, val;
+        Append(~new_exprs, new_expr);
+      end for;
+      return PGG_Attribute("", new_exprs);
+    when "!eval":
+      error if Eval cmpeq false, "!eval: expression syntax not specified";
+      error if #args ne 1, "!eval: expecting one argument: expr";
+      x := PGG_Parse(Eval, args[1]);
+      case Type(x):
+      when RngIntElt, BoolElt:
+        return PGG_Attribute(Sprintf("%o", x));
+      else
+        error "!eval: must evaluate to integer or boolean:", args[1], x;
+      end case;
+    when "!prime":
+      error if Prime cmpeq false, "!prime: not known";
+      return PGG_Attribute(Sprintf("%o", Prime));
+    when "!degree":
+      error if Degree cmpeq false, "!degree: not known";
+      return PGG_Attribute(Sprintf("%o", Degree));
+    when "!":
+      error if #args ne 1, "!: expecting one argument: expr";
+      return _preparse_algorithm(args[1]);
+    else
+      return PGG_Attribute(nm, [_preparse_algorithm(arg) : arg in args]);
+    end case;    
+  end function;
+  return _preparse_algorithm(x);
+end function;
+
+function parse_algorithm(alg : prime:=false, degree:=false)
+
+  specs := PGG_ArgSpec_ManyRecursive(procedure (set, get)
+
+    BOOL := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(BoolElt),
+      PGG_ArgSpec_Attr("True", [], func<args | true>),
+      PGG_ArgSpec_Attr("False", [], func<args | false>)
+    ]);
+
+    INTEGER := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(RngIntElt),
+      PGG_ArgSpec_AttrInt()
+    ]);
+
+    EXPRESSION := func<vars | PGG_ArgSpec_Recursive(function (X)
+      return PGG_ArgSpec_Union([
+        PGG_ArgSpec_Attr(var, [], func<args | PGG_Expression_FreeVariable(var)>)
+        : var in vars
+      ] cat [
+        // equality
+        PGG_ArgSpec_Attr("eq", [<X>,<X>], func<args | PGG_Expression_BinOp('eq', args[1], args[2] : Infix)>),
+        PGG_ArgSpec_Attr("ne", [<X>,<X>], func<args | PGG_Expression_BinOp('ne', args[1], args[2] : Infix)>),
+        // (additive) ordering
+        PGG_ArgSpec_Attr("le", [<X>,<X>], func<args | PGG_Expression_BinOp('le', args[1], args[2] : Infix)>),
+        PGG_ArgSpec_Attr("lt", [<X>,<X>], func<args | PGG_Expression_BinOp('lt', args[1], args[2] : Infix)>),
+        PGG_ArgSpec_Attr("ge", [<X>,<X>], func<args | PGG_Expression_BinOp('ge', args[1], args[2] : Infix)>),
+        PGG_ArgSpec_Attr("gt", [<X>,<X>], func<args | PGG_Expression_BinOp('gt', args[1], args[2] : Infix)>),
+        // multiplicative ordering
+        PGG_ArgSpec_Attr("mle", [<X>,<X>], func<args | PGG_Expression_BinOp(func<x,y | IsDivisibleBy(y,x)>, args[1], args[2] : Infix, Name:="mle")>),
+        PGG_ArgSpec_Attr("mlt", [<X>,<X>], func<args | PGG_Expression_BinOp(func<x,y | x ne y and IsDivisibleBy(y,x)>, args[1], args[2] : Infix, Name:="mlt")>),
+        PGG_ArgSpec_Attr("mge", [<X>,<X>], func<args | PGG_Expression_BinOp(func<x,y | IsDivisibleBy(x,y)>, args[1], args[2] : Infix, Name:="mge")>),
+        PGG_ArgSpec_Attr("mgt", [<X>,<X>], func<args | PGG_Expression_BinOp(func<x,y | x ne y and IsDivisibleBy(x,y)>, args[1], args[2] : Infix, Name:="mgt")>),
+        // valuation
+        PGG_ArgSpec_Attr("val", [<X>,<X>], func<args | PGG_Expression_BinOp(func<p,x | Valuation(x,p)>, args[1], args[2] : Format:="val_%o(%o)")>),
+        PGG_ArgSpec_Attr("val", [<X>], function(args)
+          error if prime cmpeq false, "cannot use val when prime is not implied";
+          return PGG_Expression_UnOp(func<x | Valuation(x, prime)>, args[1] : Name:="val");
+        end function),
+        // logical
+        PGG_ArgSpec_AttrList("and", X, func<args | PGG_Expression_All([*x : x in args*])>),
+        PGG_ArgSpec_AttrList("or", X, func<args | PGG_Expression_Any([*x : x in args*])>),
+        PGG_ArgSpec_Attr("not", [<X>], func<args | PGG_Expression_UnOp('not', args[1] : Prefix)>),
+        // arithmetic
+        PGG_ArgSpec_Attr("-", [<X>], func<args | PGG_Expression_UnOp('-', args[1] : Prefix)>),
+        PGG_ArgSpec_Attr("-", [<X>,<X>], func<args | PGG_Expression_BinOp('-', args[1], args[2] : Infix)>),
+        PGG_ArgSpec_AttrList("+", X, func<args | PGG_Expression_SeqOp('&+', [*x : x in args*] : Infix, Name:="+")>),
+        PGG_ArgSpec_AttrList("*", X, func<args | PGG_Expression_SeqOp('&*', [*x : x in args*] : Infix, Name:="*")>),
+        PGG_ArgSpec_Attr("^", [<X>,<X>], func<args | PGG_Expression_BinOp('^', args[1], args[2] : Infix)>),
+        // constants
+        PGG_ArgSpec_Attr("p", [], function (args)
+          error if prime cmpeq false, "prime not known";
+          return PGG_Expression_Const(prime);
+        end function),
+        PGG_ArgSpec_Transform(PGG_ArgSpec_AttrInt(), func<x | PGG_Expression_Const(x)>)
+      ]);
+    end function)>;
+    _ := set("EXPRESSION", EXPRESSION([]));
+
+    GLOBAL_MODEL := set("GLOBAL_MODEL", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_ResEval_Global_Model),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "Symmetric",
+        [<get("GALOISGROUP"),"GG",false>],
+        func<args | PGGAlg_ResEval_Global_Model_Symmetric_Make(:GaloisGroupAlg:=args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Factors",
+        [<get("GLOBAL_MODEL"),"Next",false>],
+        func<args | PGGAlg_ResEval_Global_Model_Factors_Make(:Next:=args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "RamTower",
+        [<get("GLOBAL_MODEL"),"Next",false>],
+        func<args | PGGAlg_ResEval_Global_Model_RamTower_Make(:Next:=args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "D4Tower",
+        [<get("GLOBAL_MODEL"),"Next",false>],
+        func<args | PGGAlg_ResEval_Global_Model_D4Tower_Make(:Next:=args[1])>
+      ),
+      PGG_ArgSpec_AttrSelect(
+        "Select",
+        EXPRESSION(["p","faccerts","irr","unram","tame","ram","wild","totram","totwild"]),
+        get("GLOBAL_MODEL"),
+        func<pargs, rargs | PGGAlg_ResEval_Global_Model_Select_Make(:Predicates:=pargs, Models:=rargs)>
+      ),
+      PGG_ArgSpec_Attr(
+        "RootOfUnity",
+        [ <BOOL, "Minimize", false>
+        , <BOOL, "Complement", false>
+        ],
+        func<args | PGGAlg_ResEval_Global_Model_RootOfUnity_Make(:Minimize:=args[1], Complement:=args[2])>
+      ),
+      PGG_ArgSpec_Attr(
+        "RootOfUniformizer",
+        [],
+        func<args | PGGAlg_ResEval_Global_Model_RootOfUniformizer_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "PthRoots",
+        [],
+        func<args | PGGAlg_ResEval_Global_Model_PthRoots_Make()>
+      )
+    ]));
+
+    STATISTIC := set("STATISTIC", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGStat),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr("HasRoot", [], func<args | PGGStat_HasRoot_Make()>),
+      PGG_ArgSpec_Attr("NumRoots", [], func<args | PGGStat_NumRoots_Make()>),
+      PGG_ArgSpec_Attr("FactorDegrees", [], func<args | PGGStat_FactorDegrees_Make()>),
+      PGG_ArgSpec_Attr("FactorDegreesSeq", [], func<args | PGGStat_FactorDegreesSeq_Make()>),
+      PGG_ArgSpec_Attr("Degree", [], func<args | PGGStat_Degree_Make()>),
+      PGG_ArgSpec_Attr("NumAuts", [], func<args | PGGStat_NumAuts_Make()>),
+      PGG_ArgSpec_Attr("AutGroup", [], func<args | PGGStat_AutGroup_Make()>),
+      PGG_ArgSpec_AttrList("Tup", get("STATISTIC"), func<args | PGGStat_Tup_Make(args)>),
+      PGG_ArgSpec_Attr("Factors", [<get("STATISTIC"), "Stat", false>], func<args | PGGStat_Factors_Make(:Stat:=args[1])>),
+      PGG_ArgSpec_Attr("Factors2",
+        [ <get("STATISTIC"), "Stat2", false>
+        , <get("STATISTIC"), "Stat1", false>
+        , <BOOL, "Strict", false>
+        ],
+        func<args | PGGStat_Factors2_Make(
+          : Stat2:=args[1]
+          , Stat1:=args[2] cmpne false select args[2] else args[1]
+          , Strict:=args[3]
+        )>
+      ),
+      PGG_ArgSpec_Attr("Stab", [<get("STATISTIC"), "Stat", false>], func<args | PGGStat_Stab_Make(:Stat:=args[1])>),
+      PGG_ArgSpec_Attr("GaloisGroup", [<INTEGER,"DegLe",false>,<get("GALOISGROUP"),"Alg",false>], func<args | PGGStat_GaloisGroup_Make(:Alg:=args[2], DegreeLimit:=args[1])>),
+      PGG_ArgSpec_Attr("SubfieldDegrees", [], func<args | PGGStat_SubfieldDegrees_Make()>),
+      PGG_ArgSpec_Attr("Order", [], func<args | PGGStat_Order_Make()>)
+    ]));
+
+    SUBGROUP_PRIORITY := set("SUBGROUP_PRIORITY", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_ResPriority),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "Null",
+        [],
+        func<args | PGGAlg_ResPriority_Null_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "Random",
+        [],
+        func<args | PGGAlg_ResPriority_Random_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "Reverse",
+        [ <get("SUBGROUP_PRIORITY"),"Priority",false> ],
+        func<args | PGGAlg_ResPriority_Reverse_Make(:Priority:=args[1])>
+      ),
+      PGG_ArgSpec_Transform(EXPRESSION(["Index","OrbitIndex","Diversity","Information"]), func<x | PGGAlg_ResPriority_Key_Make(x)>),
+      PGG_ArgSpec_Attr(
+        "Truncate",
+        [* <INTEGER, "Limit">
+        ,  <get("SUBGROUP_PRIORITY"), "Priority", false>
+        *],
+        func<args | PGGAlg_ResPriority_Truncate_Make(args[1] : Priority:=args[2])>
+      )
+    ]));
+
+    SUBGROUP_TRANCHETAKE := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_TrancheTake),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr("All", [], func<args | PGGAlg_TrancheTake_All_Make()>),
+      PGG_ArgSpec_Attr("FrattiniBasis", [], func<args | PGGAlg_TrancheTake_FrattiniBasis_Make()>),
+      PGG_ArgSpec_Attr("Random", [*
+        <INTEGER,"Limit">,
+        <INTEGER,"NewTries",false>,
+        <INTEGER,"RandomTries",false>
+      *], func<args | PGGAlg_TrancheTake_Random_Make(args[1] : NewTries:=args[2], RandomTries:=args[3])>)
+    ]);
+
+    SUBGROUP_STREAM := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_Stream),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "Index",
+        [ <EXPRESSION(["idx"]),"If",false>
+        , <EXPRESSION(["idx"]),"Sort",false>
+        , <get("SUBGROUP_DEDUPE"),"Dedupe",false>
+        ],
+        func<args | PGGAlg_Stream_Index_Make(:Filter:=args[1], SortKey:=args[2], Dedupe:=args[3])>
+      )
+    ]);
+
+    SUBGROUP_TRANCHE := set("SUBGROUP_TRANCHE", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_Tranche),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "All",
+        [ ],
+        func<args | PGGAlg_Tranche_All_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "Index",
+        [ <EXPRESSION(["idx","has_special","sidx0"]),"If",false>
+        , <EXPRESSION(["idx"]),"Sort",false>
+        , <SUBGROUP_TRANCHETAKE,"Take",false>
+        , <get("SUBGROUP_DEDUPE"),"Dedupe",false>
+        ],
+        func<args | PGGAlg_Tranche_Index_Make(:Filter:=args[1], SortKey:=args[2], Take:=args[3], Dedupe:=args[4])>
+      ),
+      PGG_ArgSpec_Attr(
+        "OrbitIndex",
+        [ <EXPRESSION(["idx","oidx","ridx","has_special","sidx0"]),"If",false>
+        , <EXPRESSION(["idx","oidx","ridx"]),"Sort",false>
+        , <SUBGROUP_TRANCHETAKE,"Take",false>
+        , <get("SUBGROUP_DEDUPE"),"Dedupe",false>
+        ],
+        func<args | PGGAlg_Tranche_OrbitIndex_Make(:Filter:=args[1], SortKey:=args[2], Take:=args[3], Dedupe:=args[4])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Shuffle",
+        [ <get("SUBGROUP_TRANCHE"), "Inner"> ],
+        func<args | PGGAlg_Tranche_Shuffle_Make(args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Truncate",
+        [ <INTEGER, "Length">
+        , <get("SUBGROUP_TRANCHE"), "Inner"> ],
+        func<args | PGGAlg_Tranche_Truncate_Make(args[1], args[2])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Sample",
+        [ <INTEGER, "Length">
+        , <get("SUBGROUP_TRANCHE"), "Inner"> ],
+        func<args | PGGAlg_Tranche_Truncate_Make(args[1], PGGAlg_Tranche_Shuffle_Make(args[2]))>
+      ),
+      PGG_ArgSpec_Attr(
+        "Tuples",
+        [* <INTEGER, "Length">
+        ,  <INTEGER, "Random", false>
+        ,  <get("SUBGROUP_TRANCHE"), "Inner">
+        *],
+        func<args | PGGAlg_Tranche_Tuples_Make(args[1], args[3] : Random:=args[2])>
+      )
+    ]));
+
+    SUBGROUP_DEDUPE := set("SUBGROUP_DEDUPE", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_SubgrpDedupe),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Transform(BOOL, func<x | PGGAlg_SubgrpDedupe_Make(x)>),
+      PGG_ArgSpec_Attr("Pairwise", [], func<args | PGGAlg_SubgrpDedupe_ClassFunc_Make(:Num:=0)>),
+      PGG_ArgSpec_Attr("ClassFunction", [
+        <INTEGER,"Num",false>
+      ], func<args | PGGAlg_SubgrpDedupe_ClassFunc_Make(:Num:=args[1])>),
+      PGG_ArgSpec_Attr("Tree",[*
+        <STATISTIC,"Statistic",false>,
+        <SUBGROUP_TRANCHE,"Tranche",false>
+      *], func<args | PGGAlg_SubgrpDedupe_Tree_Make(:Statistic:=args[1], Tranche:=args[2])>)
+    ]));
+
+    SUBGROUP_CHOICE := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_ResChoice),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Transform(
+        SUBGROUP_TRANCHE,
+        func<t | PGGAlg_ResChoice_Tranche_Make(:Tranche:=t)>
+      ),
+      PGG_ArgSpec_Attr(
+        "Prioritize",
+        [ <SUBGROUP_PRIORITY,"Priority",false>, <SUBGROUP_TRANCHE,"Tranche",false> ],
+        func<args | PGGAlg_ResChoice_Tranche_Make(:Tranche:=args[2], Priority:=args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Stream",
+        [* <INTEGER,"Limit",false>, <SUBGROUP_STREAM,"Stream"> *],
+        func<args | PGGAlg_ResChoice_Stream_Make(args[2] : Limit:=args[1])>
+      ),
+      PGG_ArgSpec_Attr(
+        "",
+        [ <SUBGROUP_TRANCHE,"Tranche",false>, <SUBGROUP_PRIORITY,"Priority",false> ],
+        func<args | PGGAlg_ResChoice_Tranche_Make(:Tranche:=args[1], Priority:=args[2])>
+      )
+    ]);
+
+    RESGROUPS := set("RESGROUPS", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_ResGroups),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "All",
+        [ <STATISTIC,"Stat",false>
+        , <SUBGROUP_CHOICE,"Choice",false>
+        , <get("SUBGROUP_DEDUPE"),"Dedupe",false>
+        ],
+        func<args | PGGAlg_ResGroups_All_Make(:Statistic:=args[1], SubgroupChoice:=args[2], Dedupe:=args[3])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Maximal",
+        [ <STATISTIC,"Stat",false>
+        , <SUBGROUP_CHOICE,"Choice",false>
+        , <PGG_ArgSpec_Union([
+            PGG_ArgSpec_Literal(false),
+            PGG_ArgSpec_Attr("Always"),
+            PGG_ArgSpec_Attr("AllUnequal"),
+            PGG_ArgSpec_Attr("AllUnequalAndNoSubgroup"),
+            PGG_ArgSpec_Attr("Necessary"),
+            PGG_ArgSpec_Attr("NoSubgroup"),
+            PGG_ArgSpec_Attr("Sufficient"),
+            PGG_ArgSpec_Attr("Ask")
+          ]), "DescendWhen", false>
+        , <PGG_ArgSpec_Union([
+            PGG_ArgSpec_Literal(false),
+            PGG_ArgSpec_Attr("All"),
+            PGG_ArgSpec_Attr("OneNode"),
+            PGG_ArgSpec_Attr("OneChild")
+          ]), "Descend", false>
+        , <PGG_ArgSpec_Union([
+            PGG_ArgSpec_Literal(false),
+            PGG_ArgSpec_Attr("Sufficient"),
+            PGG_ArgSpec_Attr("Necessary"),
+            PGG_ArgSpec_Attr("Generous"),
+            PGG_ArgSpec_Attr("All")
+          ]), "Useful", false>
+        , <BOOL, "Reprocess", true>
+        , <BOOL, "Reset", true>
+        , <get("SUBGROUP_DEDUPE"), "Dedupe", false>
+        ],
+        func<args | PGGAlg_ResGroups_Maximal_Make(:Statistic:=args[1], SubgroupChoice:=args[2], DescendWhen:=args[3], Descend:=args[4], Useful:=args[5], Reprocess:=args[6], Reset:=args[7], Dedupe:=args[8])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Maximal2",
+        [ <STATISTIC,"Stat",false>
+        , <SUBGROUP_CHOICE,"Choice",false>
+        , <PGG_ArgSpec_Union([
+            PGG_ArgSpec_Literal(false),
+            PGG_ArgSpec_Attr("Strict"),
+            PGG_ArgSpec_Attr("SimpleMagic"),
+            PGG_ArgSpec_Attr("Magic")
+          ]), "Descend", false>
+        , <BOOL, "Reset", true>
+        , <get("SUBGROUP_DEDUPE"), "Dedupe", false>
+        ],
+        func<args | PGGAlg_ResGroups_Maximal2_Make(:Statistic:=args[1], SubgroupChoice:=args[2], Descend:=args[3], Reset:=args[4], Dedupe:=args[5])>
+      ),
+      PGG_ArgSpec_Attr(
+        "RootsMaximal",
+        [ <get("SUBGROUP_DEDUPE"),"Dedupe",false> ],
+        func<args | PGGAlg_ResGroups_RootsMaximal_Make(:Dedupe:=args[1])>
+      ),
+      PGG_ArgSpec_AttrList(
+        "",
+        get("RESGROUPS"),
+        func<args | PGGAlg_ResGroups_Sequence_Make(args)>
+      ),
+      PGG_ArgSpec_AttrForEach(
+        "ForEach",
+        get("RESGROUPS"),
+        func<args | PGGAlg_ResGroups_Sequence_Make(args)>
+      )
+    ]));
+
+    RESEVAL := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_ResEval),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "Global",
+        [<GLOBAL_MODEL,"Model",false>],
+        func<args | PGGAlg_ResEval_Global_Make(:Model:=args[1])>
+      )
+    ]);
+
+    ARMUPTO := PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_GaloisGroup_ARM_UpTo),
+      PGG_ArgSpec_Attr("Full", [], func<args | PGGAlg_GaloisGroup_ARM_UpTo_Full_Make()>),
+      PGG_ArgSpec_Attr("Symmetric", [], func<args | PGGAlg_GaloisGroup_ARM_UpTo_Symmetric_Make()>),
+      PGG_ArgSpec_Attr("OvergroupEmbedding", [<BOOL,"CheckInjective",false>], func<args | PGGAlg_GaloisGroup_ARM_UpTo_ResolventEmbedding_Make(:CheckInjective:=args[1])>)
+    ]);
+
+    GALOISGROUP := set("GALOISGROUP", PGG_ArgSpec_Union([
+      PGG_ArgSpec_ISA(PGGAlg_GaloisGroup),
+      PGG_ArgSpec_Literal(false),
+      PGG_ArgSpec_Attr(
+        "ARM",
+        [ <RESEVAL,"Eval",false>
+        , <RESGROUPS,"Groups",false>
+        , <ARMUPTO,"UpTo",false>
+        , <BOOL,"UseEasyResolvents",false>
+        ],
+        func<args | PGGAlg_GaloisGroup_ARM_Make(:ResolventAlg:=args[1], GroupsAlg:=args[2], UpTo:=args[3], UseEasyResolvents:=args[4])>
+      ),
+      PGG_ArgSpec_Attr(
+        "Builtin",
+        [],
+        func<args | PGGAlg_GaloisGroup_Builtin_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "Tame",
+        [],
+        func<args | PGGAlg_GaloisGroup_Tame_Make()>
+      ),
+      PGG_ArgSpec_Attr(
+        "SinglyRamified",
+        [],
+        func<args | PGGAlg_GaloisGroup_SinglyRamified_Make()>
+      ),
+      PGG_ArgSpec_AttrList(
+        "",
+        get("GALOISGROUP"),
+        func<args | PGGAlg_GaloisGroup_Sequence_Make(args)>
+      ),
+      PGG_ArgSpec_AttrScope(
+        "Recursive", "this",
+        func<var, inner | PGGAlg_GaloisGroup_Recursive_Make(var, inner)>,
+        get("GALOISGROUP")
+      )
+    ]));
+  end procedure);
+
+  if Type(alg) eq MonStgElt then
+    ok, alg := PGG_Attribute_IsCoercible(alg);
+    error if not ok, alg;
+  end if;
+
+  if Type(alg) eq PGGAttr then
+    alg := preparse_algorithm(alg : Eval:=specs("EXPRESSION"), Prime:=prime, Degree:=degree);
+  end if;
+
+  return PGG_Parse(specs("GALOISGROUP"), alg);
+end function;
+
+intrinsic TryGaloisGroup(Alg :: PGGAlg_GaloisGroup, f :: PGGPol) -> BoolElt, .
+  {True if Alg can compute the Galois group of f. If so, also returns it. If not, returns an error message.}
+  not_implemented("TryGaloisGroup:", Type(Alg));
+end intrinsic;
+
+intrinsic TryGaloisGroup(f :: PGGPol : Alg:=false, Time:=false) -> BoolElt, .
+  {"}
+  if Time then
+    PGG_StartGlobalTimer();
+  end if;
+  PGG_GlobalTimer_Push("parse algorithm");
+  if Alg cmpeq false then
+    Alg := "ARM";
+  end if;
+  alg := parse_algorithm(Alg : prime:=Prime(BaseRing(f)), degree:=Degree(f));
+  vprint PGG_GaloisGroup: "algorithm =", alg;
+  PGG_GlobalTimer_Swap("GaloisGroup");
+  ok, G := TryGaloisGroup(alg, f);
+  PGG_GlobalTimer_Pop();
+  if Time then
+    PGG_GlobalTimer_PrintTree();
+    PGG_StopGlobalTimer();
+  end if;
+  return ok, G;
+end intrinsic;
+
+intrinsic PGG_TryGaloisGroup(f : Alg:=false, Time:=false) -> BoolElt, .
+  {"}
+  return TryGaloisGroup(PGG_Polynomial(f) : Alg:=Alg, Time:=Time);
+end intrinsic;
+
+intrinsic GaloisGroup(Alg :: PGGAlg_GaloisGroup, f :: PGGPol) -> GrpPerm
+  {The Galois group of f, computed using Alg.}
+  ok, G := TryGaloisGroup(Alg, f);
+  require ok: G;
+  return G;
+end intrinsic;
+
+intrinsic GaloisGroup(f :: PGGPol : Alg:=false, Time:=false) -> GrpPerm
+  {"}
+  ok, G := TryGaloisGroup(f : Alg:=Alg, Time:=Time);
+  require ok: G;
+  return G;
+end intrinsic;
+
+intrinsic PGG_GaloisGroup(f : Alg:=false, Time:=false) -> GrpPerm
+  {"}
+  ok, G := PGG_TryGaloisGroup(f : Alg:=Alg, Time:=Time);
+  require ok: G;
+  return G;
+end intrinsic;

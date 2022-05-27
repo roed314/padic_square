@@ -1,0 +1,116 @@
+declare type PGGAttr;
+declare attributes PGGAttr: name, arguments;
+
+intrinsic Print(x :: PGGAttr, lvl :: MonStgElt)
+  {Print.}
+  case lvl:
+  when "Magma":
+    printf "PGG_Attribute(%m, %m)", Name(x), Arguments(x);
+  else
+    printf "%o", Name(x);
+    if #Arguments(x) gt 0 then
+      printf "(%o)", Join([Sprintf("%o",a) : a in Arguments(x)], ",");
+    end if;
+  end case;
+end intrinsic;
+
+intrinsic Name(a :: PGGAttr) -> MonStgElt
+  {The name.}
+  return a`name;
+end intrinsic;
+
+intrinsic Arguments(a :: PGGAttr) -> []
+  {The arguments.}
+  return a`arguments;
+end intrinsic;
+
+intrinsic PGG_Attribute(name :: MonStgElt, arguments :: [PGGAttr]) -> PGGAttr
+  {An attribute.}
+  a := New(PGGAttr);
+  a`name := name;
+  a`arguments := arguments;
+  return a;
+end intrinsic;
+
+intrinsic PGG_Attribute(name :: MonStgElt) -> PGGAttr
+  {"}
+  a := New(PGGAttr);
+  a`name := name;
+  a`arguments := [];
+  return a;
+end intrinsic;
+
+intrinsic PGG_Attribute() -> PGGAttr
+  {"}
+  a := New(PGGAttr);
+  a`name := "";
+  a`arguments := [];
+  return a;
+end intrinsic;
+
+intrinsic PGG_Attribute_IsCoercible(x) -> BoolElt, .
+  {True if x is coercible to a PGGAttr.}
+  return false, "wrong type";
+end intrinsic;
+
+intrinsic PGG_Attribute_IsCoercible(x :: PGGAttr) -> BoolElt, .
+  {"}
+  return true, x;
+end intrinsic;
+
+intrinsic PGG_Attribute_IsCoercible(x :: MonStgElt) -> BoolElt, .
+  {"}
+  // process each character in turn
+  stack := [PGG_Attribute()];
+  popstack := [1];
+  i := 0;
+  for i in [1..#x] do
+    c := x[i];
+    assert #stack ge 1;
+    assert #popstack ge 1;
+    ordinary := true;
+    // pop
+    if c eq "," or c eq "]" then
+      ordinary := false;
+      npop := popstack[#popstack];
+      if #stack le npop then
+        return false, Sprintf("parse error: %o: illegal '%o'", i, c);
+      end if;
+      for j in [1..npop] do
+        Append(~stack[#stack-1]`arguments, stack[#stack]);
+        stack := stack[1..#stack-1];
+      end for;
+      popstack := popstack[1..#popstack-1];
+    end if;
+    // push
+    if c eq "," or c eq "[" then
+      ordinary := false;
+      Append(~stack, PGG_Attribute());
+      Append(~popstack, 1);
+    end if;
+    // serial push
+    if c eq ":" then
+      ordinary := false;
+      Append(~stack, PGG_Attribute());
+      popstack[#popstack] +:= 1;
+    end if;
+    // keep
+    if ordinary then
+      stack[#stack]`name cat:= c;
+    end if;
+  end for;
+  assert #stack ge 1;
+  assert #popstack ge 1;
+  if #popstack gt 1 then
+    return false, Sprintf("parse error: end of input: too few ']'");
+  end if;
+  assert #stack eq popstack[1];
+  for j in [1..popstack[1]-1] do
+    Append(~stack[#stack-1]`arguments, stack[#stack]);
+    stack := stack[1..#stack-1];
+  end for;
+  assert #stack eq 1;
+  // done
+  return true, stack[1];
+end intrinsic;
+

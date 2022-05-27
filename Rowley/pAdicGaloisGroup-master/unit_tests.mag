@@ -1,0 +1,271 @@
+// Usage:
+// magma -b [OPTION:=VALUE ...] unit_tests.mag
+// 
+// Options:
+// Debug ........... When true, launches the debugger whenever a test fails. (default: false)
+// Filter .......... Comma-separated list of tags to filter. Precede a tag with - to negate. (default: "")
+// Start ........... Starts at this numbered test. (default: 1)
+// Verbosity ....... Sets the verbosity of the Galois group algorithm. (default: 0)
+// Time ............ When true, prints timing information. (default: false)
+// Catch ........... When true, catches errors. (default: true)
+// Quit ............ When false, does not quit if a test failed. (default: true)
+
+SetQuitOnError(true);
+print "Hello.";
+initial_seed := [x,y] where x,y := GetSeed();
+print "Seed = ", initial_seed;
+
+if not assigned Catch then
+  Catch := true;
+else
+  Catch := eval Catch;
+end if;
+
+if not assigned Quit then
+  Quit := true;
+else
+  Quit := eval Quit;
+end if;
+
+if not assigned Debug then
+  Debug := false;
+else
+  Debug := eval Debug;
+end if;
+Catch and:= not Debug;
+SetDebugOnError(Debug);
+SetQuitOnError(not Debug);
+
+if not assigned Filter then
+  Unfilter := {};
+  Filter := {};
+else
+  Unfilter := {x[2..#x] : x in Split(Filter, ",; ") | x[1] eq "-"};
+  Filter := {x : x in Split(Filter, ",; ") | x[1] ne "-"};
+end if;
+
+if not assigned Start then
+  Start := 1;
+else
+  Start := eval Start;
+end if;
+
+if assigned Verbosity then
+  SetVerbose("PGG_GaloisGroup", eval Verbosity);
+end if;
+
+Time := assigned Time and eval Time;
+
+Sym := SymmetricGroup;
+Wr := WreathProduct;
+DP := DirectProduct;
+Cyc := CyclicGroup;
+T := TransitiveGroup;
+
+TEST := recformat<name, func, params, filter>;
+RESULT := recformat<success, err>;
+
+Q := RationalField();
+R<x> := PolynomialRing(Q);
+
+// the meanings of the filter terms:
+// unram: unramified
+// tame:  tamely ramified
+// sram:  singly ramified
+// irred: irreducible
+// degN:  degree N
+// 2by:   only for overgroups W=C2wrC2wr... (because some strategies are only really designed for this scenario)
+
+algs :=
+  [ <"Builtin", {}, {}>
+  , <"SinglyRamified", {}, {"sram","irred"}>
+  , <"Tame", {}, {"tame"}>
+  , <"ARM[Global[Symmetric],RootsMaximal]", {},{}>
+  , <"ARM[Global[Symmetric[Builtin]],RootsMaximal]", {},{}>
+  , <"ARM[Global[Symmetric[SinglyRamified]],RootsMaximal]", {}, {"sram","irred"}>
+  , <"ARM[Global[RamTower[Symmetric]],RootsMaximal]", {}, {"irred"}>
+  , <"ARM[Global[Factors[Symmetric]],RootsMaximal]", {},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],RootsMaximal]",{},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[FactorDegrees,All]]",{""},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[HasRoot,Index]]",{"deg8"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[NumRoots,Index]]",{"deg8"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[Factors[Tup[Degree,AutGroup]],Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[Factors2[Degree],Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[FactorDegrees,OrbitIndex]]",{"deg6","deg8","deg10","deg16"},{}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],All[FactorDegrees,OrbitIndex[If:le[ridx,2]]]]",{"deg6","deg8","deg10","deg16"},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],Maximal[FactorDegrees,OrbitIndex[If:le[ridx,2]],DescendWhen:Always]]",{},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],Maximal[FactorDegrees,OrbitIndex[If:le[ridx,2]],DescendWhen:AllUnequal,Useful:All]]",{},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],Maximal[FactorDegrees,OrbitIndex[If:le[ridx,2]],DescendWhen:Sufficient,Useful:Sufficient]]",{"deg6","deg8","deg10"},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],Maximal[FactorDegrees,OrbitIndex[If:le[ridx,2]],DescendWhen:AllUnequal,Useful:Necessary]]",{"deg6","deg8","deg10"},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Symmetric[SinglyRamified]]]],Maximal[FactorDegrees,OrbitIndex[If:le[ridx,2]],DescendWhen:AllUnequal,Useful:Generous]]",{"deg6","deg8","deg10"},{"2by"}>
+  , <"ARM[Global[Factors[RamTower[Select[unram,RootOfUnity[Minimize:True]][Symmetric[SinglyRamified]]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Select[unram,RootOfUnity[Minimize:False]][Symmetric[SinglyRamified]]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Select[unram,RootOfUnity[Minimize:False,Complement:True]][Symmetric[SinglyRamified]]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Select[unram,RootOfUnity[Minimize:True,Complement:True]][Symmetric[SinglyRamified]]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"ARM[Global[Factors[RamTower[Select[unram,RootOfUnity[Minimize:True]][tame,RootOfUniformizer][Symmetric[SinglyRamified]]]]],All[FactorDegrees,Index]]",{"deg6","deg8","deg10"},{}>
+  , <"[Tame,SinglyRamified]:ARM[Global:Factors:RamTower:Select[unram,RootOfUnity[Minimize:True,Complement:True]][tame,RootOfUniformizer][Symmetric:SinglyRamified],Maximal2[FactorDegrees]:OrbitIndex[If:le[val[ridx],1]]]",{"deg6","deg8","deg10","deg16"},{}>
+  ]
+;
+
+polys := 
+  [ < 2
+    , [ <x^2 + 2,                  100,             S(2), {}, {"sram","irred","2by"}>
+      // degree 4
+      , <x^4 + 2*x + 2,            100,             S(4), {}, {"sram","irred","2by"}>
+      , <x^4 + 2,                  100,  Wr([C(2),C(2)]), {}, {"irred","2by"}>
+      , <x^4 - x + 1,              100,             C(4), {}, {"irred","unram","tame","2by"}>
+      // reducible
+      , <(x+1)*(x^2 + x + 1),      100, DP([S(1), S(2)]), {}, {"unram","tame","sram","2by"}>
+      , <(x+1)*(x^3-x+1),          100, DP([S(1), C(3)]), {}, {"unram","tame","sram","2by"}>
+      , <(x+1)*(x^3-2),            100, DP([S(1), S(3)]), {}, {"tame","sram","2by"}>
+      // degree 6
+      , <x^6 + 2*x + 2,            800,          T(6, 8), {"deg6"}, {"irred"}>
+      // degree 8
+      , <x^8 + 16*x + 18,          100,         T(8, 35), {"deg8"}, {"irred","2by"}>
+      , <x^8+2*x^7+2*x^6+8*x^3+48, 400,             C(8), {"deg8"}, {"irred"}>
+      , <x^8+4*x^6+40*x^2+4,       400,           T(8,4), {"deg8"}, {"irred","2by"}>
+      , <x^8+20*x^2+4,             400,          T(8,14), {"deg8"}, {"irred","2by"}>
+      , <x^8+4*x^2+20,             400,          T(8,23), {"deg8"}, {"irred"}>
+      , <x^8+2*x^6+4*x^5+2*x^4+4,  400,          T(8,28), {"deg8"}, {"irred","2by"}>
+      , <x^8+4*x^5+4,              400,          T(8,36), {"deg8"}, {"irred"}>
+      , <x^8+4*x^5+6*x^4+4,        400,          T(8,42), {"deg8"}, {"irred"}>
+      , <x^8+20*x^2+12,            400,          T(8,44), {"deg8"}, {"irred"}>
+      , <x^8+28*x^4+144,           400,           T(8,2), {"deg8"}, {"irred"}>
+      // degree 10
+      , <x^10 - 2*x^5 + 4,         400,         T(10, 4), {"deg10"}, {"tame","irred"}>
+      , <x^10 - 2,                 400,         T(10, 5), {"deg10"}, {"irred"}>
+      , <x^10 + 2*x + 2,           400,        T(10, 24), {"deg10"}, {"irred"}>
+      // degree 16
+      , <x^16 + 2,                 800,       T(16, 156), {"deg16"}, {"irred","2by"}>
+      ]
+    >
+  ]
+  where S:=SymmetricGroup
+  where C:=CyclicGroup
+  where T:=TransitiveGroup
+  where Wr:=WreathProduct
+  where DP:=DirectProduct
+;
+
+function gg_func(mode)
+  case mode:
+  when "std", "stdnew":
+    return procedure (params)
+      case mode:
+      when "std":
+        PGG_UseBuiltinRoots();
+        PGG_UseBuiltinFactorization();
+      when "stdnew":
+        PGG_UseExactpAdicsRoots();
+        PGG_UseExactpAdicsFactorization();
+      else
+        assert false;
+      end case;
+      p,f,pr,G,alg := Explode(params);
+      K := PGGFldStd_Make(pAdicField(p,pr));
+      R := PolynomialRing(K);
+      xf := R ! f;
+      ans := PGG_GaloisGroup(xf : Alg:=alg, Time:=Time);
+      assert Degree(f) eq Degree(ans);
+      assert IsConjugate(Sym(Degree(f)), ans, G);
+    end procedure;
+  when "exact":
+    return procedure (params)
+      // even though we are using exact p-adics, the Builtin and SinglyRamified strategies use normal p-adics internally, and in particular SinglyRamified does factoring; hence we set the factoring algorithm so that we don't get warnings that it is unset. This could be parameterised, but since we have exact p-adics, we may as well use the factoring algorithm they supply; if there are problems with the other algorithms, this should be picked up by the "std" unit tests.
+      PGG_UseExactpAdicsRoots();
+      PGG_UseExactpAdicsFactorization();
+      // check the right packages are attached
+      ok, ExactpAdicField := IsIntrinsic("ExactpAdicField");
+      error if not ok, "ExactpAdics package not attached";
+      ok, PGGFldExact_Make := IsIntrinsic("PGGFldExact_Make");
+      error if not ok, "spec_ExactpAdics not attached";
+      ok, swa := IsIntrinsic("ExactpAdics_SetWarningAction");
+      assert ok;
+      swa("get_approx", "Ignore");
+      // set up the problem
+      p,f,pr,G,alg := Explode(params);
+      K := PGGFldExact_Make(ExactpAdicField(p));
+      K`strategy := [* <"limit", pr>, 100, <"randomize">, <"double"> *];
+      R := PolynomialRing(K);
+      xf := R ! f;
+      // IncreaseBaselinePrecision(xf, pr);
+      // find the Galois group
+      ans := PGG_GaloisGroup(xf : Alg:=alg, Time:=Time);
+      // check the answer
+      assert Degree(f) eq Degree(ans);
+      assert IsConjugate(Sym(Degree(f)), ans, G);  
+    end procedure;
+  else
+    assert false;
+  end case;
+end function;
+
+// has_exact := IsIntrinsic("ExactpAdics_Version");
+// if not has_exact then
+//   print "Warning: Not testing ExactpAdics functionality ('stdnew' and 'exact')";
+// end if;
+
+gg_tests := [
+  rec<TEST |
+    name:="GaloisGroup",
+    func:=gg_func(mode),
+    params:=<p,f,pr,G,alg>,
+    filter:=afilt2 join ffilt1 join {x : x in Split(alg,"[], ") | x in Filter join Unfilter} join {mode} join {"gg"}
+  >
+  : mode in ["std", "stdnew", "exact"],
+    algdata in algs,
+    fdata in pdata[2],
+    pdata in polys
+  | ffilt1 subset afilt1
+    and afilt2 subset ffilt2
+    where alg,afilt1,afilt2 := Explode(algdata)
+    where f,pr,G,ffilt1,ffilt2 := Explode(fdata)
+    where p:=pdata[1]
+];
+
+all_tests := gg_tests;
+
+tests := [t : t in all_tests | (Filter subset t`filter) and #(Unfilter meet t`filter) eq 0];
+
+function run_test(test : do_catch := true, idx := false, total := false)
+  if idx cmpne false then
+    printf "%o", idx;
+    if total cmpne false then
+      printf " of %o", total;
+    end if;
+  end if;
+  printf ": %o: %o... ", test`name, test`filter;
+  success := true;
+  if do_catch then
+    try
+      test`func(test`params);
+    catch e
+      success := false;
+      err := e;
+    end try;
+  else
+    test`func(test`params);
+  end if;
+  if success then
+    print "OK";
+    return rec<RESULT | success:=true>;
+  else
+    print "FAIL";
+    IndentPush();
+    print "  params =", test`params;
+    IndentPop();
+    return rec<RESULT | success:=false, err:=err>;
+  end if;
+end function;
+
+print "Starting tests...";
+results := [run_test(tests[i] : do_catch:=Catch, idx:=i, total:=#tests) : i in [Start..#tests]];
+
+print "tests:", #results;
+nfail := #[r : r in results | not r`success];
+print "fails:", nfail;
+
+if Quit or (nfail eq 0) then
+  quit;
+end if;

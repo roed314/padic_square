@@ -1,0 +1,2 @@
+p; n; j; ind of insep; polygon; residual poly; defining poly; automorphism; galois group; 
+p=2; n=16; j=1; I=[ 1, 1, 1, 1, 0 ]; R=[ <1, 1>, <16, 0> ]; A=<t + 1>; f=x^16 + 2*x + 2; Aut=1T1; Gal=16T1079

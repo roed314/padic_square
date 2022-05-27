@@ -1,0 +1,448 @@
+declare type PGGArgSpec;
+declare attributes PGGArgSpec: is_valid;
+
+declare type PGGAttr_ArgSpecSubs: PGGAttr;
+declare attributes PGGAttr_ArgSpecSubs: subs;
+
+intrinsic PGG_Parsable(A :: PGGArgSpec, x) -> BoolElt, .
+  {Tries to parse x according to A.}
+  return A`is_valid(x);
+end intrinsic;
+
+intrinsic PGG_Parsable(A :: PGGArgSpec, x :: PGGAttr_ArgSpecSubs) -> BoolElt, .
+  {"}
+  return PGG_Parsable(A, x`subs);
+end intrinsic;
+
+intrinsic PGG_Parse(A :: PGGArgSpec, x) -> .
+  {Parses x according to A}
+  ok, y := PGG_Parsable(A, x);
+  error if not ok, "could not parse", x;
+  return y;
+end intrinsic;
+
+intrinsic PGG_ArgSpec(is_valid :: UserProgram) -> PGGArgSpec
+  {The argspec with the given is_valid function.}
+  A := New(PGGArgSpec);
+  A`is_valid := is_valid;
+  return A;
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Union(choices :: [PGGArgSpec]) -> PGGArgSpec
+  {The argspec for the union of the given choices.}
+  return PGG_ArgSpec(function (x)
+    for A in choices do
+      ok, y := PGG_Parsable(A, x);
+      if ok then
+        return true, y;
+      end if;
+    end for;
+    return false, _;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Transform(A :: PGGArgSpec, tr) -> PGGArgSpec
+  {The argspec A with its output modified by tr.}
+  return PGG_ArgSpec(function (x)
+    ok, y := PGG_Parsable(A, x);
+    if ok then
+      return true, tr(y);
+    else
+      return false, _;
+    end if;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_ISA(C) -> PGGArgSpec
+  {The argspec testing if the input has the given category.}
+  return PGG_ArgSpec(function (x)
+    if ISA(ExtendedType(x), C) then
+      return true, x;
+    else
+      return false, _;
+    end if;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Literal(X) -> PGGArgSpec
+  {The argspec matching only X exactly.}
+  return PGG_ArgSpec(function (x)
+    if X cmpeq x then
+      return true, x;
+    else
+      return false, _;
+    end if;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Attr() -> PGGArgSpec
+  {The argspec matching a PGGAttr.}
+  return PGG_ArgSpec(function (x)
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if ok then
+      return true, a;
+    end if;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Attr_NoArgs() -> PGGArgSpec
+  {The argspec matching a PGGAttr with no args. Outputs the name.}
+  return PGG_ArgSpec(function (x)
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    if #Arguments(a) ne 0 then
+      return false, _;
+    end if;
+    return true, Name(a);
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Attr(name :: MonStgElt) -> PGGArgSpec
+  {The argspec matching the PGGAttr with the given name and no args.}
+  return PGG_ArgSpec_Attr(name, [], func<args | name>);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_AttrList(name :: MonStgElt, arg, transform) -> PGGArgSpec
+  {The argspec matching the PGGAttr with the given name and multiple args matching arg.}
+  return PGG_ArgSpec(function (x)
+    // coerce to a PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check the name
+    if Trim(Name(a)) ne name then
+      return false, _;
+    end if;
+    // check the args
+    xs := [**];
+    for aa in Arguments(a) do
+      ok, x := PGG_Parsable(arg, aa);
+      if ok then
+        Append(~xs, x);
+      else
+        return false, _;
+      end if;
+    end for;
+    // apply the transform
+    return true, transform(xs);
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_AttrSelect(name :: MonStgElt, parg, rarg, transform) -> PGGArgSpec
+  {The argspec matching the PGGAttr with the given name, and arguments [parg,rarg,parg,rarg,...,parg,rarg] (the final parg is optional). The pargs are predicates, and the rargs are results, so this is like select-else-select-else.}
+  return PGG_ArgSpec(function (x)
+    // coerce to a PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check the name
+    if Trim(Name(a)) ne name then
+      return false, _;
+    end if;
+    // check the args
+    args := Arguments(a);
+    ps := [**];
+    rs := [**];
+    for i in [1..#args] do
+      if i eq #args or ((i mod 2) eq 0) then
+        ok, x := PGG_Parsable(rarg, args[i]);
+        if ok then
+          Append(~rs, x);
+        else
+          return false, _;
+        end if;
+      else
+        ok, x := PGG_Parsable(parg, args[i]);
+        if ok then
+          Append(~ps, x);
+        else
+          return false, _;
+        end if;
+      end if;
+    end for;
+    // apply the transform
+    return true, transform(ps, rs);
+  end function);
+end intrinsic;
+
+procedure unpack_vars(~ok, ~a, var, val)
+  varargs := Arguments(var);
+  valargs := Arguments(val);
+  if #varargs gt #valargs then
+    ok := false;
+    return;
+  end if;
+  vname := Trim(Name(var));
+  if #vname gt 0 then
+    a[vname] := val;
+  end if;
+  for i in [1..#varargs] do
+    unpack_vars(~ok, ~a, varargs[i], valargs[i]);
+    if not ok then
+      return;
+    end if;
+  end for;
+  ok := true;
+  return;
+end procedure;
+
+function substitute(A, x)
+  nm := Name(x);
+  ok, r := IsDefined(A, Trim(nm));
+  if ok then
+    if #Arguments(x) eq 0 then
+      return true, r;
+    else
+      return false, _;
+    end if;
+  end if;
+  args := [];
+  for a in Arguments(x) do
+    ok, arg := substitute(A, a);
+    if ok then
+      Append(~args, arg);
+    else
+      return false, _;
+    end if;
+  end for;
+  return true, PGG_Attribute(nm, args);
+end function;
+
+intrinsic PGG_ArgSpec_AttrForEach(name :: MonStgElt, arg, transform) -> PGGArgSpec
+  {The argspec matching a PGGAttr with the given name and three arguments [var,iter,arg] where var specifies a variable (or variables), iter is a list of items, each getting assigned to var and substituted into arg in turn. The output is the list of args.}
+  varg := PGG_ArgSpec_Attr();
+  iarg := PGG_ArgSpec_AttrList("", varg, func<x | x>);
+  return PGG_ArgSpec(function (x)
+    // coerce to a PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check the name
+    if Trim(Name(a)) ne name then
+      return false, _;
+    end if;
+    // check the arguments
+    args := Arguments(a);
+    if #args ne 3 then
+      return false, _;
+    end if;
+    ok, var := PGG_Parsable(varg, args[1]);
+    if not ok then
+      return false, _;
+    end if;
+    ok, iter := PGG_Parsable(iarg, args[2]);
+    if not ok then
+      return false, _;
+    end if;
+    // iterate
+    rs := [**];
+    for y in iter do
+      A := AssociativeArray();
+      unpack_vars(~ok, ~A, var, y);
+      if not ok then
+        error "unpacking error";
+        return false, _;
+      end if;
+      ok, sa := substitute(A, args[3]);
+      if not ok then
+        error "substitution error";
+        return false, _;
+      end if;
+      ok, r := PGG_Parsable(arg, sa);
+      if not ok then
+        return false, _;
+      end if;
+      Append(~rs, r);
+    end for;
+    return true, transform(rs);
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_AttrScope(name :: MonStgElt, dfltvar :: MonStgElt, mkval :: UserProgram, inner :: PGGArgSpec) -> PGGArgSpec
+  {Parses `name[var,inner]` or `name[inner]` (with `var=dfltfar`), substrituting `var` for `mkval(var,inner)` in `inner`.}
+  return PGG_ArgSpec(function (x)
+    // coerce to a PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check the name
+    if Trim(Name(a)) ne name then
+      return false, _;
+    end if;
+    // check the arguments, either [var, inner] or [inner]
+    args := Arguments(a);
+    case #args:
+    when 1:
+      var := dfltvar;
+      inna := args[1];
+    when 2:
+      if #Arguments(args[1]) ne 0 then
+        return false, _;
+      end if;
+      var := Name(args[1]);
+      inna := args[2];
+    else
+      return false, _;
+    end case;
+    // whevever var is encountered, replace it with val
+    val := mkval(var, inna);
+    procedure subs(~x)
+      args := Arguments(x);
+      if Trim(Name(x)) eq var then
+        if #args eq 0 then
+          y := New(PGGAttr_ArgSpecSubs);
+          y`name := x`name;
+          y`arguments := x`arguments;
+          y`subs := val;
+          x := y;
+        else
+          error "not expecting arguments";
+        end if;
+      else
+        for i in [1..#args] do
+          subs(~args[i]);
+        end for;
+      end if;
+    end procedure;
+    subs(~inna);
+    // parse inner
+    return PGG_Parsable(inner, inna);
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_AttrInt() -> PGGArgSpec
+  {The argspec matching the PGGAttr when it looks like an integer.}
+  return PGG_ArgSpec(function (x)
+    // coerce toa PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check it has no arguments
+    if #Arguments(a) ne 0 then
+      return false, _;
+    end if;
+    // check it looks like an integer
+    z := Trim(Name(a));
+    ok, _, groups := Regexp("^-?[0-9]+$", z);
+    if ok then
+      return true, StringToInteger(z);
+    else
+      return false, _;
+    end if;
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Attr(name :: MonStgElt, args, transform) -> PGGArgSpec
+  {The argspec matching the PGGAttr with the given name and args.}
+  return PGG_ArgSpec(function (x)
+    // coerce to a PGGAttr
+    ok, a := PGG_Attribute_IsCoercible(x);
+    if not ok then
+      return false, _;
+    end if;
+    // check the name
+    if Trim(Name(a)) ne name then
+      return false, _;
+    end if;
+    // check the args
+    // pargs := [* arg[3] : arg in args *];
+    pargs := [* #arg ge 3 select <true, arg[3]> else <false> : arg in args *];
+    pos := 1;
+    for aa in Arguments(a) do
+      // try to parse keyword argument
+      for i in [1..#args] do
+        if #args[i] ge 2 then
+          if Trim(Name(aa)) eq args[i][2] and #Arguments(aa) eq 1 then
+            ok, parg := PGG_Parsable(args[i][1], Arguments(aa)[1]);
+            if ok then
+              pargs[i] := <true, parg>;
+              continue aa;
+            end if;
+          end if;
+        end if;
+      end for;
+      // try to parse a positional argument
+      for i in [pos..#args] do
+        ok, parg := PGG_Parsable(args[i][1], aa);
+        if ok then
+          pargs[i] := <true, parg>;
+          pos := i+1;
+          continue aa;
+        end if;
+      end for;
+      // failed parsing
+      return false, _;
+    end for;
+    // check all the arguments are defined
+    if exists{p : p in pargs | not p[1]} then
+      return false, _;
+    end if;
+    // apply the transform
+    return true, transform([* p[2] : p in pargs *]);
+  end function);
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Recursive(mk :: UserProgram) -> PGGArgSpec
+  {Allows the creation of a PGGArgSpec recursively.}
+  A := New(PGGArgSpec);
+  B := mk(A);
+  A`is_valid := B`is_valid;
+  return A;
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Recursive(n :: RngIntElt, mk :: UserProgram) -> []
+  {Allows the creation of n PGGArgSpecs recursively.}
+  As := [New(PGGArgSpec) : i in [1..n]];
+  Bs := mk(As);
+  require #Bs eq n: "mk must return n PGGArgSpecs";
+  for i in [1..n] do
+    As[i]`is_valid := Bs[i]`is_valid;
+  end for;
+  return As;
+end intrinsic;
+
+intrinsic PGG_ArgSpec_ManyRecursive(mk :: UserProgram) -> Map
+  {Allows the creation of many PGGArgSpecs.}
+  store := NewStore();
+  function set(name, A)
+    ok, B := StoreIsDefined(store, name);
+    if ok then
+      B`is_valid := A`is_valid;
+      return B;
+    else
+      StoreSet(store, name, A);
+      return A;
+    end if;
+  end function;
+  function get(name)
+    ok, A := StoreIsDefined(store, name);
+    if ok then
+      return A;
+    else
+      A := New(PGGArgSpec);
+      StoreSet(store, name, A);
+      return A;
+    end if;
+  end function;
+  mk(set, get);
+  return func<name | StoreGet(store, name)>;
+end intrinsic;
+
+intrinsic PGG_ArgSpec_Predicate(test :: UserProgram) -> PGGArgSpec
+  {The PGGArgSpec passing with the given test.}
+  return PGG_ArgSpec(function (x)
+    if test(x) then
+      return true, x;
+    else
+      return false, _;
+    end if;
+  end function);
+end intrinsic;
+

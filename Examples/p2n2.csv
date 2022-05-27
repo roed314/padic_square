@@ -1,0 +1,8 @@
+p; n; j; ind of insep; polygon; residual poly; defining poly; automorphism; galois group; 
+p=2; n=2; d=1*p^2+...; I=[ 1, 0 ]; R=[ <1, 1>, <2, 0> ]; A=<t + 1>; f=x^2 + 2*x + 2; Aut=2T1; Gal=2T1
+p=2; n=2; d=1*p^2+...; I=[ 1, 0 ]; R=[ <1, 1>, <2, 0> ]; A=<t + 1>; f=x^2 + 2*x + 6; Aut=2T1; Gal=2T1
+p=2; n=2; d=1*p^3+...; I=[ 2, 0 ]; R=[ <1, 2>, <2, 0> ]; A=<t + 1>; f=x^2 + 2; Aut=2T1; Gal=2T1
+p=2; n=2; d=1*p^3+...; I=[ 2, 0 ]; R=[ <1, 2>, <2, 0> ]; A=<t + 1>; f=x^2 + 4*x + 2; Aut=2T1; Gal=2T1
+p=2; n=2; d=1*p^3+...; I=[ 2, 0 ]; R=[ <1, 2>, <2, 0> ]; A=<t + 1>; f=x^2 + 10; Aut=2T1; Gal=2T1
+p=2; n=2; d=1*p^3+...; I=[ 2, 0 ]; R=[ <1, 2>, <2, 0> ]; A=<t + 1>; f=x^2 + 4*x + 10; Aut=2T1; Gal=2T1
+ 

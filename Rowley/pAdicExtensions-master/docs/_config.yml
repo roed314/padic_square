@@ -1,0 +1,6 @@
+title: p-Adic Extensions
+description: A Magma package for generating p-adic extensions
+permalink: pretty
+baseurl: /pAdicExtensions
+
+theme: jekyll-theme-slate
