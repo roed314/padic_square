@@ -1,6 +1,5 @@
 The files:
 
-  * myii.m computes indices of inseparability in magma (maybe doesn't work)
   * indices.gp computes indices of inseparability in gp
   * getslopes.m computes slopes for degree 16 fields
   * conf2.m calls getslopes on 10 entries from the list of
