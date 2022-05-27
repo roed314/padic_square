@@ -23,6 +23,8 @@ After this, you can push your changes to github
 
     git push
 
+Note that this will fail if someone else has pushed since you last pulled.  To proceed, just run `git pull` and then `git push`.  If you're editing the same file as someone else, there may be conflicts.  Open the files where git tells you that there are conflicts, edit them to resolve the conflicts, do `git commit -m "Merging"` and then `git push`.  Feel free to seek help in this case.
+
 # Other commands
 
 You can see the current status of git using
