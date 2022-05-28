@@ -1,7 +1,0 @@
-{
-  Field.mag
-  PolRing.mag
-  GaloisGroup_Builtin.mag
-  GaloisGroup_SinglyRamified.mag
-  GloMod.mag
-}
