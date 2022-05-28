@@ -1,3 +1,9 @@
 [submodule "Roe/FiniteGroups"]
 	path = Roe/FiniteGroups
 	url = git@github.com:roed314/FiniteGroups.git
+[submodule "Rowley/pAdicExtensions"]
+	path = Rowley/pAdicExtensions
+	url = git@github.com:roed314/pAdicExtensions.git
+[submodule "Rowley/pAdicGaloisGroup"]
+	path = Rowley/pAdicGaloisGroup
+	url = git@github.com:roed314/pAdicGaloisGroup.git
