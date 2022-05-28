@@ -49,7 +49,7 @@ Slides from David Roberts' talk on Monge's work can be found in the `Presentatio
 
 # Computational tools
 
-    git pull && git submodule sync --recursive && git submodule update --remote --jobs=10
+    git pull && git submodule update --init --recursive && git submodule sync --recursive && git submodule update --remote --jobs=10
 
 ## Chris Rowley's p-adic Galois group code
 
