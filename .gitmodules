@@ -1,0 +1,3 @@
+[submodule "Roe/FiniteGroups"]
+	path = Roe/FiniteGroups
+	url = git@github.com:roed314/FiniteGroups.git
