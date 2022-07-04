@@ -1,0 +1,9 @@
+With the {2,3} fields (degree 16, Galois group a 2-group):
+
+ - if the Galois group has order <= 512, then brute force is a good
+   approach.  Compute resolvents for every normal subgroup and take
+   the lower convex hull.
+
+ - every larger group has a unique normal subgroup order 2.  In most
+   cases, it is a resolvent for a field either of order 16 or of 32.
+
