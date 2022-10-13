@@ -10,7 +10,7 @@ Monge's paper on cyclic extensions of degree p^2 works out an example.
 
 ## Higher ramification polygons
 
-Looking for more refined invariants to break up the Monge varieites into smaller pieces.
+Looking for more refined invariants to break up the Monge varieties into smaller pieces.
 
 ## Counting extensions by Galois group
 
