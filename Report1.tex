@@ -1,0 +1,120 @@
+\documentclass{article}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{hyperref}
+
+\addtolength{\topmargin}{-.6in}
+\setlength{\textheight}{8.7in}
+\setlength{\textwidth}{6.3in}
+\setlength{\oddsidemargin}{0.2in}
+\setlength{\evensidemargin}{0.2in}
+
+\pagestyle{empty}
+
+\title{Report for AIM SQuaRE: Improved tabulation of local fields}
+\author{Jordi Guàrdia, John Jones, Kevin Keating, Sebastian Pauli, David Roberts, David Roe}
+\date{May 27, 2022}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+Our group met for the first time from May 23--27, 2022.  We spent the week collaborating on the theoretical underpinnings for a new database of local fields, as well as writing some exploratory code to understand some of our proposed computational approaches.  We look forward to future meetings where we can continue to develop these methods and put them in action to begin construction on a new $p$-adic field database.
+
+\section*{Stratifying $p$-adic field extensions}
+
+Group members were familiar with several invariants that may be of use in parameterizing $p$-adic fields, and we spent the first few days presenting these invariants to each other.
+
+\subsection*{Enumerating extensions}
+
+Sebastian Pauli gave a presentation on how various invariants constrain the $p$-adic digits of a defining polynomial.  Specifying multiple invariants can then drastically narrow the set of defining polynomials to consider.  For a given degree $n$ and discriminant $(p^{n+k-1})$, write $k = an + b$ with $0 \le b < n$.  In order for there to exist a totally ramified extension of this degree and discriminant, Ore's conditions constrain the possible values of $k$ by 
+\begin{equation}
+\min\left\{v_p(b)n, v_p(n)n\right\} \le k \le v_p(n)n.
+\end{equation}
+Setting $c = \lceil 1 + 2a + \frac{2b}{n} \rceil$, Krasner's lemma implies that the isomorphism type of a totally ramified extension defined by an Eisenstein polynomial only depends on the coefficients modulo $p^c$.  This reduces the set of possible polynomials to a finite set, but there is a lot of redundancy (for example, when $p=3$, $n=e=9$ and $k=7$, there are 2,125,764 possible polynomials modulo $27$ yet only 162 extensions).
+
+In order to reduce the number of polynomials to be considered, we can specify ramification polygons and residual polynomials, and finally define reduced Eisenstein polynomials following Monge \cite{monge}.  These invariants allow us to parameterize extensions with very little redundancy.  For more details, Pauli's slides are available \href{https://github.com/roed314/padic_square/blob/main/Presentations/Pauli-5-27-22.pdf}{here}, which summarize results of Ore \cite{ore}, Krasner \cite{krasner}, and Monge \cite{monge}.
+
+\subsection*{Indices of inseparability}
+
+Kevin Keating gave a presentation on the index of inseparability of a $p$-adic extension.  
+
+Given a totally ramified extension $L/K$ of degree $n$ with $v_p(n) = \nu$ and $\pi_K = \sum_{h=0}^\infty a_h \pi_L^{h+n}$, we set $i_\nu = 0$ and define $i_j$ for $0 \le j < \nu$ by
+\begin{align}
+\tilde{i}_j &= \min \left\{h \ge 0 : v_p(h + n) \le j, a_h \ne 0\right\}, \\
+i_j &= \min \left\{ \tilde{i}_j, i_{j+1} + v_L(p)\right\}.
+\end{align}
+The $i_j$ are called the \emph{indices of inseparability}, and provide a refinement of the classical ramification breaks associated to a $p$-adic extension.  We spent time during the workshop discussing their relationship with Monge's near-canonical polynomials. 
+
+For more details, notes from Keating's presentation are available \href{https://github.com/roed314/padic_square/blob/main/Presentations/Keating-5-27-22.pdf}{here}, as well as a paper \cite{keating} with applications to towers of extensions.
+
+\subsection*{Near-canonical polynomials}
+
+Following Pauli's talk, David Roberts gave a presentation on Monge's theory of near-canonical polynomials.  Given an extension $L/K$ with normal closure $M/L/K$, the ramification slopes fall into two categories: those that are already \emph{visible} in intermediate extensions of $L/K$, and those that are \emph{hidden} and only appear after passing to the normal closure.  Near-canonical polynomials collect all extensions with a given set of visible slopes into a single parameterized family, and the dependence on $K$ is mild.  For example, the degree $9$ extensions of $\mathbb{Q}_3$ with visible wild slopes $2$ and $\frac{17}{6}$ are parameterized by polynomials
+\begin{equation}
+f(a_6, a_{13}, b_{14}, b_{16}, c_9, x) = (3 + 9c_9) + 9a_{13}x^4 + 9b_{14}x^5 + 3a_6x^6 + 9b_{16}x^7 + x^9,
+\end{equation}
+where $a_i \in \{1,2\}$ and $b_i, c_i \in \{0, 1, 2\}$.  Each extension is represented by 3 polynomials, and the ambiguity can be resolved by setting a parameter (depending on $a_6, a_{13}$) to $0$.  Moreover, the hidden slopes and Galois group depends only on the values of $a_6$ and $a_{13}$.
+\begin{align*}
+f(1, 2, 0, b_{16}, c_9, x) &\quad\mbox{have Galois group 9T13 and hidden slopes $[5/2]_2$,} \\
+f(1, 1, b_{14}, b_{16}, 0, x) &\quad\mbox{have Galois group 9T18 and hidden slopes $[5/2]_2^2$,} \\
+f(2, 2, 0, b_{16}, c_9, x) &\quad\mbox{have Galois group 9T22 and hidden slopes $[3/2, 5/2]_2$,} \\
+f(2, 1, b_{14}, b_{16}, 0, x) &\quad\mbox{have Galois group 9T24 and hidden slopes $[3/2, 5/2]_2^2$.} \\
+\end{align*}
+
+For more details, Roberts' slides are available \href{https://github.com/roed314/padic_square/blob/main/Presentations/Roberts-5-28-22.pdf}{here}, summarizing work of Monge \cite{monge}
+
+\section*{Computational tools}
+
+We want to gather existing computational tools for working with p-adic fields and build new ones.  This involves writing code in Sage, Magma, and GP, as well as adding information to the LMFDB.
+
+\subsection*{Magma code for computing Galois groups of $p$-adic extensions}
+
+In order to investigate how the Galois group varies on Monge-varieties, it's crucial to be able to compute Galois groups of examples.  This can be difficult for the kinds of highly ramified examples we are most interested in; \href{https://github.com/cjdoris/pAdicGaloisGroup}{Chris Rowley's pAdicGaloisGroup package} provides one of the best methods for doing so.
+
+\subsection*{Montes package}
+
+Similarly, OM (Ore-MacLane or Okutsu-Montes) algorithm allows for the factorization of $p$-adic polynomials and the computation of associated invariants like ramification polygons, residual polynomials and other ramification information.  There are several implementations available, including one in \href{https://doc.sagemath.org/html/en/reference/valuations/index.html}{Sage} implemented by Julian R\"uth, and another in \href{https://github.com/roed314/padic_square/tree/main/Montes}{Magma} implemented by Jordi Guardia and Enric Nart.  Access to both implementations and their authors will help in our efforts to investigate ramification invariants.
+
+\subsection*{$p$-adic extensions in Sage}
+
+David Roe is part of a long-term \href{https://trac.sagemath.org/ticket/28466}{project} for implementing general extensions in Sage, which may prove useful as we investigate how Monge's theory behaves for relative extensions.
+
+\subsection*{Valuation filtrations}
+
+Given an abstract group G, we would like to understand what possible ramification filtrations are possible, both as bare subgroup chains within $G$ and with rational numbers attached giving the ramification breaks.  This answer may depend on the realization of $G$ as a permutation group made when specifying it as a Galois group.
+
+Magma code for finding possible filtrations of $G$ can be found \href{https://github.com/roed314/padic_square/blob/main/Roe/padic_filtrations.m}{here}; it was written during the SQuaRE in May.
+
+\subsection*{Counting Galois groups}
+
+Magma code for counting $p$-adic fields with a given Galois group can be found \href{https://github.com/roed314/padic_square/blob/main/Roe/padic_galois_counts.m}{here}.  It was written during the SQuaRE in May, and is currently restricted to the case where the degree is a power of $2$.
+
+\section*{Ongoing projects}
+
+\subsection*{Galois stratification of Monge varieties}
+
+We are investigating how the Galois group varies with the parameters defining near canonical polynomials, as well as how it varies for a fixed family as the base field changes.  Monge's paper on extensions of degree $p^2$ \cite{mongep2} works out an example.
+
+\subsection*{Degree 16 $2$-adic fields}
+
+The first case not contained in the existing database of $p$-adic fields is the degree 16 extensions of $\mathbb{Q}_2$.  As a step toward this case, John Jones has been working on finding number fields that are Galois splitting models for degree 16 $2$-adic fields (namely, the number field is totally ramified at $2$ and the decomposition group at $2$ is the whole Galois group).  
+
+\subsection*{Higher ramification polygons}
+
+We are looking for more refined invariants to break up the Monge varieties into smaller pieces.  We hope that such a further stratification can help clarify how hidden slopes and Galois groups vary within families of near-canonical polynomials.
+
+\subsection*{Using Montes' algorithm}
+
+Another possible avenue toward refining Monge's construction is to combine them with Montes' algorithm and the ramification information computed therein.
+
+\begin{thebibliography}{9}
+\bibitem{keating} Kevin Keating, ``Indices of inseparability in towers of field extensions,'' J. Number Theory \textbf{150} (2015), pp. 81--97.
+\bibitem{krasner} Marc Krasner, ``Nombre des extensions d'un degré donné d'un corps p-adique,'' (Les Tendances Géométriques en Algèbre et Théorie des Nombres, ed.), CNRS, Paris, 1966.
+\bibitem{mongep2} Maurizio Monge, ``A characterization of Eisenstein polynomials generating extensions of degree $p^2$ and cyclic of degree $p^3$ over an unramified $p$-adic field,'' J. de Th\'eorie des Nombres de Bordeaux \textbf{26} no. 1 (2014), pp. 201--231.
+\bibitem{monge} Maurizio Monge, ``A family of Eisenstein polynomials generating totally ramified extensions, identification of extensions and construction of class fields,'' Int. J. Number Theory \textbf{10} no. 7 (2011), pp. 1699--1727.
+\bibitem{ore} \O{}ystein Ore, ``Bemerkungen zur Theorie der Differente,'' Math. Zeitschr. \textbf{25} (1926), pp. 1--8.
+\bibitem{pauli-sinclair} Sebastian Pauli and Brian Sinclair, ``Enumerating extensions of $(\pi)$-adic fields with given invariants,'' Int. J. Number Theory \textbf{13} no. 8 (2017) 
+\end{thebibliography}
+
+\end{document}
