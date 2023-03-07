@@ -11,7 +11,7 @@ def ramification_polygon(psi):
             sage: from sage.rings.polynomial.padics.polynomial_padic import Polynomial_padic
             sage: R = ZpFM(3,20,print_mode='terse'); Rx.<x> = R[]
             sage: f = x^27+3*x^24+3*x^18+3*x^9+9*x^3+9*x^3+6
-            sage: rp = f.ramification_polygon()
+            sage: rp = ramification_polygon(f)
             sage: rp.vertices()
             [(1, 51), (3, 24), (9, 9), (27, 0)]
             sage: rp.slopes(repetition=False)
@@ -21,7 +21,7 @@ def ramification_polygon(psi):
 
             sage: R = ZpFM(3,20,print_mode='terse'); Rx.<x> = R[]
             sage: f = x^108+3*x^24+3*x^18+3*x^9+9*x^3+9*x^3+6
-            sage: rp = f.ramification_polygon()
+            sage: rp = ramification_polygon(f)
             sage: rp.vertices()
             [(1, 132), (3, 24), (9, 9), (27, 0), (108, 0)]
             sage: rp.slopes(repetition=False)
@@ -32,8 +32,8 @@ def ramification_polygon(psi):
         - Brian Sinclair and Sebastian Pauli (2017-07-19): initial version
 
         """
-        if not psi.is_eisenstein():
-            raise ValueError("ramification polygons are only defined for Eisenstein polynomials and this polynomial is not Eisenstein")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("ramification polygons are only defined for Eisenstein polynomials and this polynomial is not Eisenstein")
 
         from sage.geometry.newton_polygon import NewtonPolygon
 
@@ -42,7 +42,7 @@ def ramification_polygon(psi):
         vv = [cc.valuation() for cc in psi]
         k = psi.base_ring()
         p = k.prime()
-        n = psi.degree()
+        n = ZZ(psi.degree())
         su = n.valuation(p)
         abscissa = 1
         for i in range(su):
@@ -94,15 +94,15 @@ def ramification_polygon_with_colinear_points(psi):
         - Brian Sinclair (2017-07-19): initial version
 
         """
-        if not psi.is_eisenstein():
-            raise ValueError("the polynomial psi must be Eisenstein")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("the polynomial psi must be Eisenstein")
 
         # First we find the ordinates of points above p^k
         verts = []
         vv = [cc.valuation() for cc in psi]
         k = psi.base_ring()
         p = k.prime()
-        n = psi.degree()
+        n = ZZ(psi.degree())
         su = n.valuation(p)
         abscissa = 1
         for i in range(su):
@@ -211,8 +211,8 @@ def residual_polynomials(psi):
         - Sebastian Pauli and Brian Sinclair (2017-07-20): initial version
 
         """
-        if not psi.is_eisenstein():
-            raise ValueError("the polynomial psi must be Eisenstein")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("the polynomial psi must be Eisenstein")
 
         n = psi.degree()
         phi0 = psi.constant_coefficient()
@@ -314,8 +314,8 @@ def residual_polynomial_of_component(psi,m):
           (2017)
         """
 
-        if not psi.is_eisenstein():
-            raise ValueError("residual polynomials are only defined for Eisenstein polynomials")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("residual polynomials are only defined for Eisenstein polynomials")
 
         Rx = psi.parent()
         R = Rx.base()
@@ -364,8 +364,8 @@ def deformed_eisenstein(psi, m, theta, trunc):
         - Sebastian Pauli and Brian Sinclair (2017-07-20): bang to sage 8.0, documentation
 
         """
-        if not psi.is_eisenstein():
-            raise ValueError("this function can only deform Eisenstein polynomials")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("this function can only deform Eisenstein polynomials")
 
         f = psi
         n = f.degree()
@@ -412,13 +412,13 @@ def monge_reduce(psi):
             sage: from sage.rings.polynomial.padics.polynomial_padic import Polynomial_padic
             sage: R = ZpFM(3,30); Rx.<x> = R[]
             sage: f = x^9+249*x^3+486*x+30
-            sage: g = f.monge_reduce()
+            sage: g = monge_reduce(f)
             sage: g
             (1 + O(3^30))*x^9 + ... + (2*3 + O(3^30))*x^3 + ... + (3 + O(3^30))
 
         If the polynomial is Monge-reduced it does not change when reduced again::
 
-            sage: h = g.monge_reduce()
+            sage: h = monge_reduce(f)
             sage: h == g
             True
 
@@ -434,14 +434,14 @@ def monge_reduce(psi):
         The Monge-reduction of a polynomial generating a tamely ramified extension::
 
             sage: f = x^20+249*x^3+486*x+30
-            sage: g = f.monge_reduce()
+            sage: g = monge_reduce(f)
             sage: g
             (1 + O(3^30))*x^20 + ... + (3 + O(3^30))
 
         The Monge-reduction of a polynomial generating a tamely ramified extension of large degree::
 
             sage: f = x^90+249*x^81+486*x^18+30
-            sage: g = f.monge_reduce()
+            sage: g = monge_reduce(f)
             sage: ZZ['X'](g)
             X^90 + 3*X^81 + 9*X^78 + 9*X^72 + 9*X^54 + 54*X^44 + 54*X^43 + 54*X^41 + 54*X^40 + 18*X^39 + 54*X^38 + 27*X^26 + 54*X^13 + 3
 
@@ -450,14 +450,14 @@ def monge_reduce(psi):
             sage: R = ZpFM(5,20); Rx.<x> = R[]
             sage: f = x^25+15625*x^4+5
             sage: g = x^25+5
-            sage: f.monge_reduce() == g.monge_reduce()
+            sage: monge_reduce(f) == monge_reduce(g)
             True
 
         Monge-reduction over an unramified extensions::
 
             sage: R.<g> = ZqFM(4,30); Rx.<x> = R[]
             sage: f = x^8 + 66*g*x^6 + 132*g*x + 258
-            sage: f.monge_reduce()
+            sage: monge_reduce(f)
             (1 + O(2^30))*x^8 + (O(2^30))*x^7 + (g*2 + O(2^30))*x^6 + ... + (g*2^2 + O(2^30))*x + (2 + O(2^30))
 
         Monge reduction over a totally ramified extension::
@@ -465,7 +465,7 @@ def monge_reduce(psi):
             sage: R = ZpFM(3,30); Rx.<x> = R[]
             sage: S.<a> = R.ext(x^3+9*x+3); Sy.<y> = S[]
             sage: f = y^6+6*y^2+a
-            sage: f.monge_reduce()
+            sage: monge_reduce(f)
             (1 + O(a^90))*y^6 + (O(a^90))*y^5 + (O(a^90))*y^4 + (O(a^90))*y^3 + (a^3 + O(a^90))*y^2 + (O(a^90))*y + (a + O(a^90))
 
         AUTHORS:
@@ -480,8 +480,8 @@ def monge_reduce(psi):
           (2014): 1-29.
         """
 
-        if not psi.is_eisenstein():
-            raise ValueError("only Eisenstein polynomials can be Monge-reduced")
+        #if not psi.is_eisenstein():
+        #    raise ValueError("only Eisenstein polynomials can be Monge-reduced")
 
         f = psi
         n = f.degree()
@@ -525,7 +525,8 @@ def monge_reduce(psi):
         alpha = eta
 
         # reduction step 0 -- taking care of the constant coefficient
-
+        # print("n",n,type(n),"p",p,type(p))
+        n = ZZ(n)
         if n == p**n.valuation(p):
             beta = 1
         else:
@@ -539,7 +540,7 @@ def monge_reduce(psi):
         # other reduction steps
 
         def f_ij(f,m):
-            lev = hasse_herbrand(psi)
+            lev = hasse_herbrand(psi,m)
             i = lev % n
             j = ZZ((n - i + lev) // n)
             fij = F(f[i].expansion(j))
@@ -548,17 +549,19 @@ def monge_reduce(psi):
         J0 = ramification_polygon(psi).vertices()[0][1]
         trunc = n + 2*J0 # truncate here in deform
         for m in range(1,(-min(ramification_polygon(psi).slopes())).ceil()):
+            # print("m",m)
             alpha, i, j = f_ij(f,m)
-            Sm = f.residual_polynomial_of_component(m)
+            Sm = residual_polynomial_of_component(f,m)
             beta = canonical_representative_add(alpha,[eta**j*Sm(a) for a in F])
             theta = solve_naive(eta**j*Sm,alpha-beta)
-            f = f.deformed_eisenstein(m, -R(theta), trunc)
+            f = deformed_eisenstein(f,m, -R(theta), trunc)
 
         # Find the last break in the Hasse-Herbrand function of psi
         hhslope = n
         m = 1
         hhm = 0
         while hhslope > 1:
+            # print("slope",hhslope)
             lrb = hhm
             hhm = hasse_herbrand(psi,m)
             hhslope = hhm - lrb
