@@ -7,37 +7,26 @@ SetColumns(0);
 AttachSpec("../spec");
 print label;
 p, n, c, num := Explode([StringToInteger(c) : c in Split(label, ".")]);
-f, coeffs := Explode([* eval c : c in Split(Read("lf.todo/" * label), "|") *]);
+f, eispol := Explode(Split(Read("lf.todo/" * label), "|"));
+f := StringToInteger(f);
 if n eq f then
-    // Unramified, where the code below doesn't work
+    // Unramified, so we already know the output
     PrintFile("lf.out/" * label, Sprintf("%o|{}|{}|{}", label));
     exit;
 end if;
-// Taken from SuggestedPrecision
+// Taken from SuggestedPrecision; this is probably way too high now that we're no longer factoring
 prec := Maximum([2, 2*c]);
-
-while true do
-    R := pAdicRing(p, prec);
-    S := PolynomialRing(R);
-    pol := S!coeffs;
-
-    try
-        fac, prec_loss, t := Factorization(pol : Extensions:=true);
-        eispol := DefiningPolynomial(t[1]`Extension);
-    catch err
-        prec := 2*prec;
-        continue;
-    end try;
-    break;
-end while;
-AssignNames(~S, ["x"]);
+F<t> := UnramifiedExtension(pAdicRing(p, prec), f);
+S<x> := PolynomialRing(F);
+y := x;
+eispol := eval eispol;
 
 polygon := Vertices(RamificationPolygon(eispol));
 // Remove the first vertex, since it has y-coordinate infinity
 polygon := polygon[2..#polygon];
 respols := ResidualPolynomials(eispol);
 k := CoefficientRing(respols[1]);
-AssignNames(~k, ["a"]);
+AssignNames(~k, ["t"]);
 associated_inertia := [LCM([Degree(he[1]) : he in Factorization(respol)]) : respol in respols];
 
 // Now prepare for printing to file
