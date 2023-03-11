@@ -521,10 +521,24 @@ def monge_reduce(psi,all=False,test=False):
                 return F(min(bset)) 
             for i in range(0,q-1):
                 #print("extension")
-                h = funct-xi**i
+                h = alpha+funct-xi**i
                 #print("xi^i",xi^i)
                 if len(h.roots())>0:
                     return xi**i
+
+        def solve_naive_obsolete(funct,gamma):
+        # solve poly(t)=gamma
+        # terrible
+            sol = []
+            for a in F:
+                if funct(a)==gamma:
+                   sol.append(a)
+                   # return a
+            if sol == []:
+              raise Error("No solution found")
+            return sol
+
+
 
         def solve_naive(funct,gamma):
             #print("solving",funct,"=",gamma)
@@ -545,15 +559,19 @@ def monge_reduce(psi,all=False,test=False):
             beta = 1
         else:
             beta = canonical_representative_mult(eta,n) #set([a**n for a in F if not a.is_zero()]))
+        #print("beta",beta)
 
         #print(" reduction step 0 -- solving")
+        #print(set(solve_naive(z**n,beta/alpha))==set(solve_naive_obsolete(z**n,beta/alpha)))
         Thetas = solve_naive(z**n, beta/alpha)
+        #print("theta",Thetas)
         # Theta = R(theta)
         # f = theta**n*f(theta^-1*T)
          
         # list of Monge reduced polynomials
         # M = {RT([f[i]*R(theta)**(n-i) for i in range(0,n+1)]) for theta in Thetas}
         M = [RT([f[i]*R(theta)**(n-i) for i in range(0,n+1)]) for theta in Thetas]
+        #print("M",M)
 
         if test:
           for psi in M:
@@ -568,6 +586,7 @@ def monge_reduce(psi,all=False,test=False):
             fij = F(f[i].expansion(j))
             return fij, i, j
 
+
         J0 = ramification_polygon(psi).vertices()[0][1]
         trunc = n + 2*J0 # truncate here in deform
         for m in range(1,(-min(ramification_polygon(psi).slopes())).ceil()):
@@ -576,22 +595,24 @@ def monge_reduce(psi,all=False,test=False):
             Sm = residual_polynomial_of_component(f,m)
             #beta = canonical_representative_add(alpha,[eta**j*Sm(a) for a in F])
             beta = canonical_representative_add(alpha,eta**j*Sm)
+            #print("fbeta",beta)
             #print("Thetas: solutions of",eta**j*Sm," = ",alpha,"-",beta)
             Thetas = solve_naive(eta**j*Sm,alpha-beta)
             #print(set(solve_naive(eta**j*Sm,alpha-beta))==set(solve_naive_obsolete(eta**j*Sm,alpha-beta)))
             # M = {deformed_eisenstein(ff,m, -R(theta), trunc,test=test) for theta in Thetas for ff in M}
             M = [deformed_eisenstein(ff,m, -R(theta), trunc,test=test) for theta in Thetas for ff in M]
+            #print(m,"M",M)
 
             # f = deformed_eisenstein(f,m, -R(theta), trunc,test=test)
 
-
+        #print("M",M)
         #print("f",f)
         if test:
           #print("before beyond")        
           for psi in M:
             if not generate_isomorphic(psi,f): 
                raise Error("Sm reduction failed")
-
+        
         # Find the last break in the Hasse-Herbrand function of psi
         hhslope = n
         m = 1
@@ -614,6 +635,7 @@ def monge_reduce(psi,all=False,test=False):
         #print("Krasner bound reduction")
         i = lrb % n
         j = ZZ((n - i + lrb) // n)
+        #print("kM",M)
         
         if R.ramification_index() == 1:
             #print("e=1")
@@ -624,6 +646,7 @@ def monge_reduce(psi,all=False,test=False):
             # M = {RT([cc - (cc >> j+1 << j+1) for cc in ff.list()[:i+1]] + [cc - (cc >> j << j) for cc in ff.list()[i+1:n]] + [R.one()]) for ff in M}
             M = [RT([cc - (cc >> j+1 << j+1) for cc in ff.list()[:i+1]] + [cc - (cc >> j << j) for cc in ff.list()[i+1:n]] + [R.one()]) for ff in M]
                 
+        #print("M",M)
         if test:        
           #print("after beyond")        
           for psi in M:
