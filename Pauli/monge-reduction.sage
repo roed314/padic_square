@@ -364,16 +364,28 @@ def deformed_eisenstein(psi, m, theta, trunc, test=False):
         if theta==0:
            return psi
 
-        #print("deform by",theta,"pi ^",m)
+        #print("deform",psi,"by",theta,"* pi ^",m)
         #if not psi.is_eisenstein():
         #    raise ValueError("this function can only deform Eisenstein polynomials")
         #print("deforming")
         f = psi
         n = f.degree()
         x = f.variables()[0]
+    
+        OKx = f.parent()
+        OKu.<u> = PolynomialRing(OKx)
+        fu = f(u)
+        gu = u-theta*u**(m+1)
+        ru = fu.resultant(x-gu)
+        #print("resultant",ru)
+        return ru
 
         # truncation level, because x^trunc = 0 mod piK^prec, as v(x) = 1/n
         g = f(x + theta*x**(m+1)).truncate(trunc) # IMPROVE-ME: use f_0 instead of x^n
+        if test:        
+          if not generate_isomorphic(psi,g): 
+             raise ValueError("transformation failed")
+        #print("g",g)
         prev = (0, n)
         while(g.degree() > n):
             # where f has terms we want to kick out
@@ -392,12 +404,16 @@ def deformed_eisenstein(psi, m, theta, trunc, test=False):
 
             # subtract, from g, (badmononial/x^n)*g
             g = (g - g[min_idx] * g.shift(min_idx-n)).truncate(trunc)
+        
+            if test:        
+             if not generate_isomorphic(psi,g): 
+                raise ValueError("deformation loop failed at n =",n)
 
         gdef = g.truncate(n+1).monic()
         
         if test:        
           if not generate_isomorphic(psi,g): 
-             print("ERROR")
+             raise ValueError("deformation failed")
 
         return gdef 
 
@@ -425,27 +441,27 @@ def monge_reduce(psi,all=False,test=False):
             sage: from sage.rings.polynomial.padics.polynomial_padic import Polynomial_padic
             sage: R = ZpFM(3,30); Rx.<x> = R[]
             sage: f = x^9+249*x^3+486*x+30
-            sage: g = monge_reduce(f)
+            sage: g = monge_reduce(f,test=True)
             sage: g
             (1 + O(3^30))*x^9 + ... + (2*3 + O(3^30))*x^3 + ... + (3 + O(3^30))
 
         If the polynomial is Monge-reduced it does not change when reduced again::
 
-            sage: h = monge_reduce(f)
+            sage: h = monge_reduce(f,test=True)
             sage: h == g
             True
 
         The Monge-reduction of a polynomial generating a tamely ramified extension::
 
             sage: f = x^20+249*x^3+486*x+30
-            sage: g = monge_reduce(f)
+            sage: g = monge_reduce(f,test=True)
             sage: g
             (1 + O(3^30))*x^20 + ... + (3 + O(3^30))
 
         The Monge-reduction of a polynomial generating a tamely ramified extension of large degree::
 
             sage: f = x^90+249*x^81+486*x^18+30
-            sage: g = monge_reduce(f)
+            sage: g = monge_reduce(f,test=True)
             sage: ZZ['X'](g)
             X^90 + 3*X^81 + 9*X^78 + 9*X^72 + 9*X^54 + 54*X^44 + 54*X^43 + 54*X^41 + 54*X^40 + 18*X^39 + 54*X^38 + 27*X^26 + 54*X^13 + 3
 
@@ -454,14 +470,14 @@ def monge_reduce(psi,all=False,test=False):
             sage: R = ZpFM(5,20); Rx.<x> = R[]
             sage: f = x^25+15625*x^4+5
             sage: g = x^25+5
-            sage: monge_reduce(f) == monge_reduce(g)
+            sage: monge_reduce(f,test=True) == monge_reduce(g)
             True
 
         Monge-reduction over an unramified extensions::
 
             sage: R.<g> = ZqFM(4,30); Rx.<x> = R[]
             sage: f = x^8 + 66*g*x^6 + 132*g*x + 258
-            sage: monge_reduce(f)
+            sage: monge_reduce(f,test=True)
             (1 + O(2^30))*x^8 + (O(2^30))*x^7 + (g*2 + O(2^30))*x^6 + ... + (g*2^2 + O(2^30))*x + (2 + O(2^30))
 
         Monge reduction over a totally ramified extension::
@@ -471,6 +487,15 @@ def monge_reduce(psi,all=False,test=False):
             sage: f = y^6+6*y^2+a
             sage: monge_reduce(f)
             (1 + O(a^90))*y^6 + (O(a^90))*y^5 + (O(a^90))*y^4 + (O(a^90))*y^3 + (a^3 + O(a^90))*y^2 + (O(a^90))*y + (a + O(a^90))
+
+            sage: R.<t> = ZqFM(4,500); Rx.<x> = R[]
+            sage: f = x^8 + 4*x^7 + 12*x^6 + 20*x^5 + (-2*t + 22)*x^4 + (-8*t + 16)*x^3 + (-8*t + 8)*x^2 - 8*t*x - 2*t
+            sage: monge_reduce(f, test=True)
+
+            sage: R = ZpFM(2,30);Rx.<x> = R[]
+            sage: f = x^2+14
+            sage: monge_reduce(f,test=True)
+
 
         AUTHORS:
 
@@ -535,7 +560,7 @@ def monge_reduce(psi,all=False,test=False):
                    sol.append(a)
                    # return a
             if sol == []:
-              raise Error("No solution found")
+              raise ValueError("No solution found")
             return sol
 
 
@@ -576,7 +601,7 @@ def monge_reduce(psi,all=False,test=False):
         if test:
           for psi in M:
             if not generate_isomorphic(psi,f): 
-               raise Error("constant coefficient reduction failed")
+               raise ValueError("constant coefficient reduction failed")
         #print("other reduction steps")
 
         def f_ij(f,m):
@@ -611,7 +636,7 @@ def monge_reduce(psi,all=False,test=False):
           #print("before beyond")        
           for psi in M:
             if not generate_isomorphic(psi,f): 
-               raise Error("Sm reduction failed")
+               raise ValueError("Sm reduction failed")
         
         # Find the last break in the Hasse-Herbrand function of psi
         hhslope = n
@@ -632,9 +657,9 @@ def monge_reduce(psi,all=False,test=False):
         #    (lrb mod n, (n-(lrb mod n) + lrb)/n)
         # can be set to zero.
         
-        #print("Krasner bound reduction")
         i = lrb % n
         j = ZZ((n - i + lrb) // n)
+        #print("Krasner bound reduction")
         #print("kM",M)
         
         if R.ramification_index() == 1:
@@ -651,7 +676,7 @@ def monge_reduce(psi,all=False,test=False):
           #print("after beyond")        
           for psi in M:
             if not generate_isomorphic(psi,f): 
-               raise Error("krasner reduction failed")
+               raise ValueError("krasner reduction failed")
         
         # return all monge reduction of f
 
@@ -828,5 +853,4 @@ def generate_isomorphic(phi,psi):
            S.<a> = R.ext(phi)
            St.<t> = PolynomialRing(S)
            return has_root(St(psi))[0]
-
 
