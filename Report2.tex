@@ -1,0 +1,68 @@
+\documentclass{article}
+\usepackage{amsmath,amsthm,amssymb}
+\usepackage{hyperref}
+
+\addtolength{\topmargin}{-.6in}
+\setlength{\textheight}{8.7in}
+\setlength{\textwidth}{6.3in}
+\setlength{\oddsidemargin}{0.2in}
+\setlength{\evensidemargin}{0.2in}
+
+\DeclareMathOperator{\gal}{gal}
+\DeclareMathOperator{\Gal}{Gal}
+\newcommand{\Q}{\mathbb{Q}}
+
+\pagestyle{empty}
+
+\title{Report for AIM SQuaRE: Improved tabulation of local fields}
+\author{Jordi Guàrdia, John Jones, Kevin Keating, Sebastian Pauli, David Roberts, David Roe}
+\date{March 10, 2023}
+
+\begin{document}
+
+\maketitle
+\thispagestyle{empty}
+
+Our group met for the second time from March 6--10, 2023.  We continued several projects begun at our first meeting, and started to incorporate some of our work into the LMFDB.  Code and other documents associated with the projects described here can be found in our github repository,
+
+\begin{center}
+\href{https://github.com/roed314/padic_square/}{https://github.com/roed314/padic\_square/}
+\end{center}
+
+\subsection*{Composita of $p$-adic fields of $p$-power order}
+
+The original local fields database is organized around not-necessarily Galois extensions $K$ of the fields $\Q_p$ of $p$-adic numbers.   However, information was also given about Galois closures $K^{\gal}/K/\Q_p$.   Included in this extra information was the Galois group $\Gal(K^{\gal}/\Q_p)$ and the ramification filtration through it.  
+
+A general goal of the SQuaRE is to present more detailed Galois-theoretic information that makes contact with theoretical results about the Galois theory of $p$-adic fields and parallel results for number fields.  This week, we looked at the compositum $L$ of all octic $2$-adic fields $K$ for which $\Gal(K^{\gal}/\Q_2)$ has order a power of $2$.  Old theoretical results combined with computer calculations from ten years ago say $G = \Gal(L/\Q_2)$ has order $2^{25}$.   Similarly, we looked at the compositum $L_p$ of all 2-group number fields ramified within 
+$\{\infty,2,p\}$ for a fixed prime $p$.  Again, old theoretical results combined with newer computer calculations say that $G_p=\Gal(L_p/Q)$ has order $2^{18}$ for $p=3,5$.  A remarkable aspect of this situation is that $2$ never splits, so that the $G_p$ can be viewed as quotients of $G$.  
+
+The new material on this subproject this week was two-fold.  First we were more systematic in our calculations with a goal--not yet achieved--of saying exactly what the ramification filtration through the large group $G$ is.  Second, we took first steps towards repeating everything starting from the complete list of degree 16 fields.  It looks like the analog of $G$, $G_3$, and $G_5$ now have the much larger orders $2^{204}$, $2^{97}$, and $2^{101}$ respectively.   Generally speaking, the subproject is looking closely at a special case to support the general aim of incorporating more Galois theory into the database that we are constructing.  
+   
+\subsection*{Degree $16$ fields with limited ramification}
+
+Utilizing the special nature of fields unramified outside $\{2,p\}$ for primes congruent to 3 or 5 mod 8, we computed such degree 16 fields when $p=3$.  We were able to compute all other data for these fields needed for the LMFDB, and have added them to the website's database.  We similarly computed the fields with $p=5$ and found that they had very little overlap $2$-adically with the fields coming with $p=3$.  We have started the process of computing the auxiliary data needed for the LMFDB and have completed the most difficult step: determining the breaks in the higher ramification filtration of the Galois closures of these fields.
+
+We started investigating the degree 16 extensions of $\Q(\sqrt{-7})$ unramified outside $\{2, \infty\}$ since these, when considered $2$-adically, would be in bijection with the degree 16 extensions of $\Q_2$ whose Galois groups are 2-groups.  We were able to compute the fields and their Galois groups, but other invariants look much more difficult to compute.
+
+At the same time, we started a second approach, namely to compute a large number of degree 16 extensions of $\Q$ which are highly ramified at 2 and whose Galois groups are 2-groups.  We found a fairly simple test to see if such an extension would have its decomposition group for a prime above 2 to equal its Galois group.  This situation would make computations of invariants much easier.
+
+\subsection*{Choosing defining polynomials}
+
+A given field extension $K/\Q_p$ has many possible defining polynomials.  This week, we started several projects toward improving the defining polynomial chosen for existing fields within the LMFDB database.  First, for unramified extensions, we have switched to lifts of Conway polynomials (when available), which are a common deterministic choice of defining polynomials for finite fields.  Second, for totally ramified extensions, we aim to use Monge-reduced polynomials \cite{monge}, which we are in the process of computing across the database.  More generally, we are working toward a $p$-adic analogue of the \texttt{polredabs} function in Pari \cite{pari}.  For number fields, this provides a deterministic choice of defining polynomial that can be computed starting from an arbitrary defining polynomial for the field.  We are working on an efficient algorithm that, given any generating polynomial for a totally ramified extension, returns a Monge-reduced polynomial in Eisenstein from using OM-techniques as realized in Montes algorithm.  We can combine this with the Conway polynomials for unramified extensions to specify a natural defining polynomial for each $p$-adic field in the LMFDB database.
+
+\subsection*{Jump sets and indices of inseparability}
+
+We have written Magma code to compute jump sets for $p$-adic fields, and intend to compute this across the LMFDB data set and display it on the homepages of $p$-adic fields.  We also wrote Magma code that produces templates for Eistenstein polynomials corresponding to totally ramified extensions with specified indices of inseparability \cite{keating}.  We hope to extend this code with the aim of producing a complete list of all extensions of $\Q_p$ with specified indices of inseparability.
+
+\subsection*{Improvements to the LMFDB}
+
+We have started making our work available to a broader audience by including many of these invariants on the $p$-adic field homepages within the LMFDB.  Specifically, these pages now contain a diagram of the ramification polygon together with the residual polynomials and associated inertia, and a list of indices of inseparability.  Moreover, users can search for fields by specifying these invariants (together with visible slopes, which we added to the pages last year).
+
+
+\begin{thebibliography}{9}
+\bibitem{keating} Kevin Keating, ``Indices of inseparability in towers of field extensions,'' J. Number Theory \textbf{150} (2015), pp. 81--97.
+\bibitem{monge} Maurizio Monge, ``A family of Eisenstein polynomials generating totally ramified extensions, identification of extensions and construction of class fields,'' Int. J. Number Theory \textbf{10} no. 7 (2011), pp. 1699--1727.
+\bibitem{pari} Christian Batut, Karim Belabas, Dominique Benardi, Henri Cohen, and Michel Olivier.  User's guide to {PARI-GP}, 1985-2023.  \url{http://pari.math.u-bordeaux.fr}
+\end{thebibliography}
+
+\end{document}
