@@ -5,6 +5,7 @@
  * Fix bug where variable numbering is repeated (e.g. [2.4.4_10_11_11](https://olive.lmfdb.xyz/padicField/family/2.4.4_10_11_11))
  * Fix bug where fractional heights lead to fractional variable subscripts (e.g. [2.6.6_12_13_13](https://olive.lmfdb.xyz/padicField/family/2.6.6_12_13_13))
  * Fix bug where red and green points can overlap (e.g. [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/family/2.2.2_5_7_9))
+ * Fix broken [random family](http://localhost:37780/padicField/families/?n=8&search_type=Random)
  * When the denominator of a slope is not a power of p, the formula for green points, (u_i′,v_i) = (⟨h_i′⟩,⌈h_i′⌉) given on page 17 of David's notes breaks since the u-coordinate is not integral.  The number of bands has also decreased, so we no longer have the same number of points.  What's the right analogue of green points in this setting?  Do they just not exist, since there isn't an integral point at the bottom of the band?
  * Write lots of knowls
    * the picture
@@ -15,7 +16,6 @@
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
    * Num fields
    * Num poly (this should be related to the knowl for the generic defining polynomial, and may want to wait to see if we are able to reduce the set of polynomials considered)
-
  * Indicate when the list of fields in a family is complete, and handle no fields more gracefully
  * Figure out how to vary the base field
  * Add ramification polygon to family page
