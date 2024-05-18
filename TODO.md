@@ -6,6 +6,8 @@
  * Fix bug where fractional heights lead to fractional variable subscripts (e.g. [2.6.6_12_13_13](https://olive.lmfdb.xyz/padicField/family/2.6.6_12_13_13))
  * Fix bug where red and green points can overlap (e.g. [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/family/2.2.2_5_7_9))
  * Fix broken [random family](http://localhost:37780/padicField/families/?n=8&search_type=Random)
+ * Add more dynamic columns to dynamic stats, fix links (currently if you click on one of the entries [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family since visible isn't being unparsed correctly).
+ * Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page.
  * When the denominator of a slope is not a power of p, the formula for green points, (u_i′,v_i) = (⟨h_i′⟩,⌈h_i′⌉) given on page 17 of David's notes breaks since the u-coordinate is not integral.  The number of bands has also decreased, so we no longer have the same number of points.  What's the right analogue of green points in this setting?  Do they just not exist, since there isn't an integral point at the bottom of the band?
  * Write lots of knowls
    * the picture
