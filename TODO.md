@@ -27,6 +27,9 @@
  * Fix tight boundaries around picture, which are cutting off the top of a red diamond in /padicField/family/3.2.1_2
  * Do we want to alternate greys in bands in a family picture?
  * David mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
+ * Make tame part have slope -1 in ramification polygon
+ * Search by and display order of automorphism group
+ * Group by finer invariants in list of fields, with link to expand (like in ECQ isogeny classes)
 
 ## LMFDB data
 
@@ -47,6 +50,12 @@
  * Investigate how Galois groups vary in a family (is there a generic group?  can we predict which groups will arise a priori somehow?)
  * Think about how to reduce the number of variables in cases like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/family/2.2.2_5_7_9), or divide into subfamilies.  Note that this family breaks the claim that there is at most one red point: there are four, three of which coincide with green points (this may be a p=2 phenomenon).
 
+## Paper
+
+ * Figure out what to put in the paper!
+ * Make overleaf project
+
 ## Other
 
  * Review our previous reports and pick up threads that we haven't been working on.
+ * Update David Roberts' slides to fix errors
