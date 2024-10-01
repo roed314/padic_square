@@ -22,6 +22,8 @@
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Fix __iter__ when base is not Qp.
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
+ * Replace "Num. poly" with "Redundancy," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * base_aut.  Be able to search on it.
+ * Add slope multiplicities column, make it possible to search.
 
 ## LMFDB data
 
