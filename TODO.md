@@ -7,30 +7,36 @@
  * Write lots of knowls
    * the picture
    * the generic defining polynomial
-   * the label of a family (this will probably change from the current Serre-Swan slopes to Artin slopes soon to match the rest of the LMFDB, which will break some of the links in this email...)
-   * the rams for a family
-   * the heights for a family
+   * the label of a family, update label knowls for fields and packets
+   * the (scaled) rams for a family
+   * the (scaled) heights for a family
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
-   * Num fields
-   * Num poly (this should be related to the knowl for the generic defining polynomial, and may want to wait to see if we are able to reduce the set of polynomials considered)
+   * Field count
+   * Poly count (this should be related to the knowl for the generic defining polynomial)
  * Indicate when the list of fields in a family is complete, and handle no fields more gracefully
- * Add ramification polygon to family page
- * Add the canonical subfields to the rows in the list of fields at the bottom of each family page.
+ * Add ramification polygon and slope polygon to family page (maybe toggle with family photo?)
+ * Add the canonical subfields to search columns (on family page and field search results)
  * Update grey bands to get darker with more overlap
- * David mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
  * Make tame part have slope -1 in ramification polygon
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Fix __iter__ when base is not Qp.
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
- * Replace "Num. poly" with "Redundancy," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * base_aut.  Be able to search on it.
+ * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
  * Add slope multiplicities column, make it possible to search.
+ * Total only shows up in one subtable for the packet display, better border above/left of total row/col.
+ * e and f broken in family search (or maybe don't have all possible bases for 2,16 families)
+ * Talk about what to do with hollow green squares: they are the only things that do not correspond to coefficients in the generic polynomial.
+ * Pretty print the base field of a family
+ * Space between brackets in empty list
+ * Table for varying (galois groups and hidden slopes)
+ * Tabs for pictures
 
 ## LMFDB data
 
  * Add more degree 16 extensions of Q2, presumably by finding more Galois splitting models
  * Once we have a p-adic polredabs, update the defining polynomials in lf_fields to use it, run in lf_families to get a collection of defining polynomials
  * Once we have a p-adic polredabs, compute the field labels for each polynomial in families and store in another table.
- * add relative Galois groups to the database (Galois group over the maximal unramified subextension and the maximal tame subextension).
+ * add relative defning polynomials and relative Galois groups to the database (Galois group over the canonical subfields).
 
 ## Other code
 
@@ -44,13 +50,12 @@
 
 ## Paper
 
- * Figure out what to put in the paper!
- * Make overleaf project
+ * Write it!
 
 ## Other
 
  * Review our previous reports and pick up threads that we haven't been working on.
- * Update David Roberts' slides to fix errors
+ * David mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
 
 ## Done
 
@@ -71,3 +76,6 @@
  * ~~Create a lf_families table to serve as a table behind the [families searches](https://olive.lmfdb.xyz/padicField/families/).  Make sure that we're happy with our labeling scheme first, and figure out how we want to handle unramified and tame bases for families.~~
  * ~~Run Keating/JumpSetPack.m at scale to compute jump sets across lf_fields.~~
  * ~~Think about how to reduce the number of variables in cases like [2-2.2_5_7_9](https://olive.lmfdb.xyz/padicField/family/2-2.2_5_7_9), or divide into subfamilies.~~
+ * ~~Figure out what to put in the paper!~~
+ * ~~Make overleaf project~~
+ * ~~Update David Roberts' slides to fix errors~~
