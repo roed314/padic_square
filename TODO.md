@@ -21,7 +21,6 @@
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Fix __iter__ when base is not Qp.
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
- * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
  * Add slope multiplicities column, make it possible to search.
  * Total only shows up in one subtable for the packet display, better border above/left of total row/col.
  * e and f broken in family search (or maybe don't have all possible bases for 2,16 families)
@@ -30,6 +29,14 @@
  * Space between brackets in empty list
  * Table for varying (galois groups and hidden slopes)
  * Tabs for pictures
+ * Search on: number of segments, slope multiplicity, slopes, heights, rams, mass, missing mass
+ * write mass as integer+fractional
+ * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
+ * decimal mass, mass_missing for sorting and searching
+ * "Abs. Artin slopes"
+ * Change "Unramified/totally ramified tower" to "Canonical tower"
+ * Would be nice to show actual automorphism group (commutator)
+ * Add ability to compute families on the fly
 
 ## LMFDB data
 
@@ -47,6 +54,7 @@
 ## Theory pursuits
 
  * Investigate how Galois groups vary in a family (is there a generic group?  can we predict which groups will arise a priori somehow?)
+  * Monge-like formula for number of fields in a family
 
 ## Paper
 
