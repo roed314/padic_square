@@ -2,7 +2,6 @@
 
 ## LMFDB front end
 
- * Add more dynamic columns to dynamic stats, fix links (currently if you click on one of the entries [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family since visible isn't being unparsed correctly).
  * Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We should add tame information to the hidden slopes (and remove the visible slopes from the row headers); ideally we could make sub-tables organized by the size of the Galois group.
  * Write lots of knowls
    * the picture
@@ -13,30 +12,32 @@
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
    * Field count
    * Poly count (this should be related to the knowl for the generic defining polynomial)
- * Indicate when the list of fields in a family is complete, and handle no fields more gracefully
  * Add ramification polygon and slope polygon to family page (maybe toggle with family photo?)
  * Add the canonical subfields to search columns (on family page and field search results)
- * Update grey bands to get darker with more overlap
  * Make tame part have slope -1 in ramification polygon
- * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Fix __iter__ when base is not Qp.
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
  * Add slope multiplicities column, make it possible to search.
  * Total only shows up in one subtable for the packet display, better border above/left of total row/col.
- * e and f broken in family search (or maybe don't have all possible bases for 2,16 families)
  * Talk about what to do with hollow green squares: they are the only things that do not correspond to coefficients in the generic polynomial.
  * Pretty print the base field of a family
  * Space between brackets in empty list
  * Table for varying (galois groups and hidden slopes)
  * Tabs for pictures
  * Search on: number of segments, slope multiplicity, slopes, heights, rams, mass, missing mass
- * write mass as integer+fractional
  * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
  * decimal mass, mass_missing for sorting and searching
  * "Abs. Artin slopes"
  * Change "Unramified/totally ramified tower" to "Canonical tower"
+ * Define nu in defining polynomial for family.
+ * In family field, have columns for ai, bi, ci (better alignment, smaller)
+
+ * Update grey bands to get darker with more overlap
+ * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Would be nice to show actual automorphism group (commutator)
  * Add ability to compute families on the fly
+ * Add more dynamic columns to dynamic stats, fix links (currently if you click on one of the entries [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family since visible isn't being unparsed correctly).
+
 
 ## LMFDB data
 
@@ -87,3 +88,5 @@
  * ~~Figure out what to put in the paper!~~
  * ~~Make overleaf project~~
  * ~~Update David Roberts' slides to fix errors~~
+ * ~~write mass as integer+fractional~~
+ * ~~Indicate when the list of fields in a family is complete, and handle no fields more gracefully~~
