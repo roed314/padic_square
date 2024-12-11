@@ -1,4 +1,11 @@
 
+## Questions
+
+ * Do we want to change how we display Swan vs Artin slopes?
+ * Should we replace the grid display on the front page with Counts search like in modular forms?
+ * What pictures do we want on the family page?
+ * Which version of ramification polygon?
+* I liked Figure 2.2 in last version.  New table 1.1 is nice.  I like new version of family photo (3.1) but we should talk about symbols and colors.
 
 ## LMFDB front end
 
@@ -6,32 +13,29 @@
  * Write lots of knowls
    * the picture
    * the generic defining polynomial
-   * the label of a family, update label knowls for fields and packets
+   * the label of a family (including absolute label), update label knowls for fields and packets
    * the (scaled) rams for a family
    * the (scaled) heights for a family
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
-   * Field count
-   * Poly count (this should be related to the knowl for the generic defining polynomial)
  * Add ramification polygon and slope polygon to family page (maybe toggle with family photo?)
  * Add the canonical subfields to search columns (on family page and field search results)
  * Make tame part have slope -1 in ramification polygon
- * Fix __iter__ when base is not Qp.
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
  * Add slope multiplicities column, make it possible to search.
  * Total only shows up in one subtable for the packet display, better border above/left of total row/col.
- * Talk about what to do with hollow green squares: they are the only things that do not correspond to coefficients in the generic polynomial.
  * Pretty print the base field of a family
- * Space between brackets in empty list
  * Table for varying (galois groups and hidden slopes)
  * Tabs for pictures
  * Search on: number of segments, slope multiplicity, slopes, heights, rams, mass, missing mass
  * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
- * decimal mass, mass_missing for sorting and searching
- * "Abs. Artin slopes"
  * Change "Unramified/totally ramified tower" to "Canonical tower"
  * Define nu in defining polynomial for family.
  * In family field, have columns for ai, bi, ci (better alignment, smaller)
+ * After reloading data, fix mass and mass_stored display to use mixed fractions
+ # Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
+ * Add sort keys for family (including sort keys on base for relative families)
 
+ * Fix __iter__ when base is not Qp.
  * Update grey bands to get darker with more overlap
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
  * Would be nice to show actual automorphism group (commutator)
@@ -44,7 +48,7 @@
  * Add more degree 16 extensions of Q2, presumably by finding more Galois splitting models
  * Once we have a p-adic polredabs, update the defining polynomials in lf_fields to use it, run in lf_families to get a collection of defining polynomials
  * Once we have a p-adic polredabs, compute the field labels for each polynomial in families and store in another table.
- * add relative defning polynomials and relative Galois groups to the database (Galois group over the canonical subfields).
+ * add relative defining polynomials and relative Galois groups to the database (Galois group over the canonical subfields).
 
 ## Other code
 
@@ -90,3 +94,10 @@
  * ~~Update David Roberts' slides to fix errors~~
  * ~~write mass as integer+fractional~~
  * ~~Indicate when the list of fields in a family is complete, and handle no fields more gracefully~~
+ * ~~Space between brackets in empty list~~
+ * ~~decimal mass, mass_missing for sorting and searching~~
+ * ~~Write lots of knowls~~
+   * ~~Field count~~
+ * ~~Update data to divide rams by p-1~~
+ * ~~"Abs. Artin slopes" rather than "visible slopes" in search columns~~
+ * ~~Talk about what to do with hollow green squares: they are the only things that do not correspond to coefficients in the generic polynomial.~~
