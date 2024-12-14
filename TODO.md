@@ -34,6 +34,8 @@
  * After reloading data, fix mass and mass_stored display to use mixed fractions
  # Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
  * Add sort keys for family (including sort keys on base for relative families)
+ * Change "mass missing" to "mass found"
+ * Run PolRedPadic on the Find box
 
  * Fix __iter__ when base is not Qp.
  * Update grey bands to get darker with more overlap
