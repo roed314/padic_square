@@ -5134,10 +5134,6 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	M:=FujiwaraBound(GloGenerator);
 
-
-
-
-
 	//Here we need to compare W and Wprime since the rest depends on the correct block structure.
 
 	if MyIsConjugate(W,Wprime) then                       //Check if "same" group. Maybe change so you check equal.
@@ -5173,10 +5169,6 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	end if;
 
-
-
-	
-
 	//Case where W is a subset of Wprime
 
 	if (W subset Wprime) then
@@ -5210,7 +5202,7 @@ end function;
 
 
 function Three_Segments_Eisenstein(L)
-// "Three_Segments_Eisenstein";
+"Three Segments";
 
 	Qp:=PrimeRing(L[1]);
 
@@ -5227,9 +5219,7 @@ function Three_Segments_Eisenstein(L)
 			T:=Max_Tame_Subextension(DefiningPolynomial(L[2],Qp));
 	end if;
 
-
 	N1:= Two_Segments_Eisenstein(DefiningPolynomial(L[2],Qp),L[1], L[2], CyclicGroup(1), T,T1);	//will be prevgrp after first
-
 
 	//Now for third segment
 
@@ -5318,7 +5308,8 @@ function Eisenstein_Case(phi:global:=false)
 
 		Prev_Grp:=CyclicGroup(1);
 
-		return Two_Segments_Eisenstein(DefiningPolynomial(L0,Qp),L1, L0, Prev_Grp, T,T1);
+                G, L := Two_Segments_Eisenstein(DefiningPolynomial(L0,Qp),L1, L0, Prev_Grp, T,T1);
+		return G;
 	end if;
 
 	if #L eq 3 then
@@ -5326,7 +5317,7 @@ function Eisenstein_Case(phi:global:=false)
 		return Three_Segments_Eisenstein(L);
 
 	end if;
-
+error "GaloisGroupMilstead: not implemeneted yet";
 	return 0;
 
 end function;
