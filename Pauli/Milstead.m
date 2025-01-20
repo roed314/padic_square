@@ -5122,9 +5122,9 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 	end if;
 // SP  
 //print Candidates;
-print "bis hier und nicht weiter";
-a:=0; 2/a;
-" ----------- weiter ";
+//print "bis hier und nicht weiter";
+//a:=0; 2/a;
+//" ----------- weiter ";
 //More than one Candidate remains so we get the necessary data to form resolvents.
 
 	GloGenerator, h1, Block_Length,Wprime,WreathBlocksprime:=GGlobalRepresentation(phi,L0);   //h1 is embedding map.
