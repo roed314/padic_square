@@ -1339,7 +1339,7 @@ end function;
 
 
 function  One_Segment(phi)
-// "One_Segment";
+"One Segment";
 //Input: phi Eisenstein in OK[x] of degree p^m such that the ramification polygon of phi has one segment.
 
 //Output:  Gal(phi) as a subgroup of AGL_m(F_p).
@@ -5094,7 +5094,7 @@ end function;
 
 
 function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
-// "Two_Segments_Eisenstein";
+"Two Segments";
 //First, we reduce coefficients of phi.
 	n:=Degree(phi);
 	p:=Prime(PrimeRing(T));
@@ -6916,6 +6916,17 @@ end function;
 
 intrinsic GaloisGroupMilstead(phi:global:=false) -> .
 {}
+   if not IsEisenstein(phi) then
+     fact, c, exts := Factorization(phi:Extensions:=true);
+     if #fact gt 1 then
+        error "GaloisGroupMilstead: Polynomial must be irreducible";
+     end if;
+     if exts[1]`F gt 1 then
+        error "GaloisGroupMilstead: Polynomial must generate totally ramified extension";
+     end if;
+     phi := DefiningPolynomial(exts[1]`Extension);
+   end if;
+
    return Eisenstein_Case(phi:global:=global);
 
 end intrinsic;
