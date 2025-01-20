@@ -537,7 +537,7 @@ end function;
 
 
 function Max_Tame_Subextension(phi)
-"Max_Tame_Subextension";
+// "Max_Tame_Subextension";
 //An implementation of Greve-Pauli Theorem 9.1.
 //That is a function that given an Eisenstein polynomial returns the maximal tamely ramified subfield of its splitting field.
 
@@ -1339,7 +1339,7 @@ end function;
 
 
 function  One_Segment(phi)
-"One_Segment";
+// "One_Segment";
 //Input: phi Eisenstein in OK[x] of degree p^m such that the ramification polygon of phi has one segment.
 
 //Output:  Gal(phi) as a subgroup of AGL_m(F_p).
@@ -3959,7 +3959,7 @@ end function;
 
 function RelativeResolventFilter(W, Candidates,UpperLimit, alpha, M, GloGenerator,p)
 
-	"Initial Candidates", [TransitiveGroupIdentification(r): r in Candidates];
+	//"Initial Candidates", [TransitiveGroupIdentification(r): r in Candidates];
 
 //For now, LowIndexSubgroups up to n^2
 
@@ -3967,7 +3967,7 @@ function RelativeResolventFilter(W, Candidates,UpperLimit, alpha, M, GloGenerato
 	
 	while (Current lt UpperLimit) do
 
-		"Index", Current;
+		//"Index", Current;
 
 		J:=LowIndexSubgroups(W,<Current,Current>);
 
@@ -4702,7 +4702,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	
 	Num_Remaining[3]:=#third;
 
-"#Remaining 3",Num_Remaining;
+// "#Remaining 3",Num_Remaining;
 	if #third eq 1 then
 		return Num_Remaining, InitialCandidates, third, W, WreathBlocks;
 	end if;
@@ -4726,7 +4726,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	end for;
 
 	Num_Remaining[4]:=#Fourth;
-"#Remaining 4",Num_Remaining;
+// "#Remaining 4",Num_Remaining;
 
 	if #Fourth eq 1 then
 		return Num_Remaining, InitialCandidates, Fourth, W, WreathBlocks;
@@ -4775,7 +4775,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[5]:=#Fifth;
 
-"#Remaining 5",Num_Remaining;
+// "#Remaining 5",Num_Remaining;
 	if #Fifth eq 1 then
 		return Num_Remaining, InitialCandidates, [t[1]: t in Fifth], W, WreathBlocks;
 	end if;
@@ -4812,7 +4812,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[6]:=#Sixth;
 
-"#Remaining 6",Num_Remaining;
+// "#Remaining 6",Num_Remaining;
 	if #Sixth eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Sixth], W, WreathBlocks;
 	end if;
@@ -4866,7 +4866,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[7]:=#Seventh;
 
-"#Remaining 7",Num_Remaining;
+// "#Remaining 7",Num_Remaining;
 	if #Seventh eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Seventh], W, WreathBlocks;
 	end if;
@@ -4888,7 +4888,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[8]:=#Eighth;
 	
-"#Remaining 8",Num_Remaining;
+// "#Remaining 8",Num_Remaining;
 	if #Eighth eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Eighth], W, WreathBlocks;
 	end if;
@@ -4947,7 +4947,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	 
 	Candidates:=[Ninth[i][1] : i in [1..#Ninth]];     //Later: after 8th criteria.
 
-"#Remaining 9",Num_Remaining;
+// "#Remaining 9",Num_Remaining;
 	if #Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, Candidates, W, WreathBlocks;
 	end if;
@@ -4958,7 +4958,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[10]:=#Candidates;
 
-"#Remaining 10",Num_Remaining;
+// "#Remaining 10",Num_Remaining;
 	if #Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, Candidates, W, WreathBlocks;
 	end if;
@@ -4991,7 +4991,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[11]:=#New_Candidates;		
 	
-"#Remaining 11",Num_Remaining;
+// "#Remaining 11",Num_Remaining;
 	if #New_Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, New_Candidates, W, WreathBlocks;
 	end if;
@@ -5049,7 +5049,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[#Num_Remaining +1]:=#C1;
 
-"#Remaining C1",Num_Remaining;
+// "#Remaining C1",Num_Remaining;
 //a:=0; 1/a;
 	if #C1 eq 1 then
 		return Num_Remaining, InitialCandidates, C1, W, WreathBlocks;
@@ -5067,7 +5067,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[#Num_Remaining +1]:=#C2;
 
-"#Remaining C2",Num_Remaining;
+// "#Remaining C2",Num_Remaining;
 	if #C2 eq 1 then
 		return Num_Remaining, InitialCandidates,C2, W, WreathBlocks;
 	end if;
@@ -5086,7 +5086,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	Num_Remaining[#Num_Remaining +1]:=#C3;
 
 
-"#Remaining C3",Num_Remaining;
+// "#Remaining C3",Num_Remaining;
 	return Num_Remaining, InitialCandidates, C3, W, WreathBlocks;
 
 end function;
@@ -5094,7 +5094,7 @@ end function;
 
 
 function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
-"Two_Segments_Eisenstein";
+// "Two_Segments_Eisenstein";
 //First, we reduce coefficients of phi.
 	n:=Degree(phi);
 	p:=Prime(PrimeRing(T));
@@ -5114,7 +5114,7 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 		//Num_Remaining;
 		//phi;
 		//TransitiveGroupIdentification(Candidates[1]);
-"#Remaining",#Num_Remaining,Num_Remaining;
+// "#Remaining",#Num_Remaining,Num_Remaining;
 		return Candidates[1],Num_Remaining;						//Early exit
 	end if;
 	if n gt TransitiveGroupDatabaseLimit() then 
@@ -5181,7 +5181,7 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	if (W subset Wprime) then
 
-		"BURP!!! ";
+		//"BURP!!! ";
 
 		sigma:=MatchBlocks(WreathBlocksprime,SubfieldBlocks,n);
 		alpha:=ReOrderRoots(sigma,alpha);
@@ -5204,15 +5204,13 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	error "This Case has not been implemented yet.";
 
-
-
 	return Candidates, Num_Remaining;
 
 end function;
 
 
 function Three_Segments_Eisenstein(L)
-"Three_Segments_Eisenstein";
+// "Three_Segments_Eisenstein";
 
 	Qp:=PrimeRing(L[1]);
 
@@ -5245,7 +5243,7 @@ end function;
 
 
 function Eisenstein_Case(phi:global:=false)
-"Eisenstein_Case";
+// "Eisenstein_Case";
 	if IsEisenstein(phi) eq false then
 		error "Error:  Input polynomial is not Eisenstein";
 	end if;
@@ -5295,7 +5293,7 @@ function Eisenstein_Case(phi:global:=false)
 	if (Number_Of_Segments(phi) eq 1) and (n eq (p^(Valuation(n,p)))) then
 		 return One_Segment(phi);
 	end if;
-"AutomorphismGroup";
+// "AutomorphismGroup";
 	Autoo:=AutomorphismGroup(K,Qp);  //Maybe not do this here.
 
 	if Order(Autoo) eq n then
