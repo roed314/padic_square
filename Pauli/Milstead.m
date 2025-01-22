@@ -537,7 +537,7 @@ end function;
 
 
 function Max_Tame_Subextension(phi)
-// "Max_Tame_Subextension";
+vprint Galois,1:"GaloisGroupMilstead: Max_Tame_Subextension";
 //An implementation of Greve-Pauli Theorem 9.1.
 //That is a function that given an Eisenstein polynomial returns the maximal tamely ramified subfield of its splitting field.
 
@@ -844,14 +844,14 @@ end function;
 function reduce_poly(f)
 
 // f must be eisenstein
-//"reduce_poly in",f;
+vprint Galois,1:"GaloisGroupMilstead: reduce_poly in",f;
   o := CoefficientRing(Parent(f));
   n := Degree(f);
   fseq := Eltseq(f);
   j := Min([n*Valuation(o!n)] cat [n*(Valuation(o!i)+Valuation(fseq[i+1])-1)+i:i in [1..n-1]]);
   prec := Ceiling((n+2*j+1)/n);  //Krasner bound
   oo := ChangePrecision(o,prec);
-//"reduce_poly out",Polynomial(o,Polynomial(oo,f)); 
+vprint Galois,1:"GaloisGroupMilstead: reduce_poly out",Polynomial(o,Polynomial(oo,f)); 
   return Polynomial(o,Polynomial(oo,f)), prec; 
 end function;
 
@@ -1266,8 +1266,8 @@ function TameGaloisGroup(T)
 	r:=Integers()!r;
 	q:=#ResidueClassField(PrimeRing(T));
 
-//"r", r;
-//"f", f;
+vprint Galois,1:"GaloisGroupMilstead: r", r;
+vprint Galois,1:"GaloisGroupMilstead: f", f;
 
 	
 
@@ -1339,7 +1339,7 @@ end function;
 
 
 function  One_Segment(phi)
-"One Segment";
+vprint Galois,1:"GaloisGroupMilstead: One Segment";
 //Input: phi Eisenstein in OK[x] of degree p^m such that the ramification polygon of phi has one segment.
 
 //Output:  Gal(phi) as a subgroup of AGL_m(F_p).
@@ -2609,24 +2609,24 @@ function MultiSolvable(n,p)
 
     candidates := []; // possible Galois groups
     for i in [1..#l] do
-         // "\n#G",#s[i];
+         vprint Galois,1:"GaloisGroupMilstead: \n#G",#s[i];
 
           for g0 in l[i] do
                 if IsNormal(s[i],g0) and IsCyclic(quo<s[i]|g0>) then
                       g0index := Index(s[i],g0);
                           if true then
-                           // "  [G:G0]",g0index;
+                           vprint Galois,1:"GaloisGroupMilstead:   [G:G0]",g0index;
                             G0:= g0;
                             lg0 := LowIndexSubgroups(g0,<1,p^g0index-1>);
                            
                         for h in lg0 do
-                                  //"[G0:G1]",Index(g0,h);
+                                  vprint Galois,1:"GaloisGroupMilstead: [G0:G1]",Index(g0,h);
                                       if IsCyclic(quo<g0|h>) and (p^g0index-1) mod Index(g0,h) eq 0 then
                                             if IsNormal(s[i],h) and IspGroup(h,p) then   //Last one not included in Brown paper nor awtrey one.  Not needed since subgroup of solvable group is solvable.
-                                              //"    [G0:G1]",Index(g0,h);
+                                              vprint Galois,1:"GaloisGroupMilstead:     [G0:G1]",Index(g0,h);
                                               G1:= h;
                                               Append(~candidates,<s[i],G0,G1>);
-                                              //"    #candidates",#candidates;
+                                              vprint Galois,1:"GaloisGroupMilstead:     #candidates",#candidates;
                                         end if;
                                 end if;
                         end for;
@@ -2944,7 +2944,7 @@ function GrieveSieve(phi)
                        				G0:= g0;
                        				lg0 := LowIndexSubgroups(g0,<e0,e0>);
                        				for h in lg0 do
-                               				//"[G0:G1]",Index(g0,h);
+                               				vprint Galois,1:"GaloisGroupMilstead: [G0:G1]",Index(g0,h);
                                				if IsCyclic(quo<g0|h>) and (p^g0index-1) mod Index(g0,h) eq 0 and (p^g0index-1) ge e0 then
                                        				if IsNormal(S[i],h) and IspGroup(h,p) then   //Last one not included in Brown paper nor awtrey one.  Not needed since subgroup of solvable group is solvable.
                                        					"    [G0:G1]",Index(g0,h);
@@ -3328,7 +3328,7 @@ function PartialTschirnhausen(P,q)
 	n:=My_Degree(P);
         T:=[Random(0,q):i in [1..n-2]];
 	A :=  x+x^2*Polynomial(Z,T);
-//"PartialTschirnhausen",A;        
+vprint Galois,1:"GaloisGroupMilstead: PartialTschirnhausen",A;        
         return A;
 
 end function;
@@ -3536,9 +3536,9 @@ function Resolvent(G,H,pRootss,M,GloGenerator)
 	F:=RelativeInvariant(G,H);
 
 	//if VerifyInvariant(F,G,H) then
-		//"Invariant PASSES";
+		vprint Galois,1:"GaloisGroupMilstead: Invariant PASSES";
 	//else
-		//"Invariant FAILS";
+		vprint Galois,1:"GaloisGroupMilstead: Invariant FAILS";
 	//end if;
 
 	CReps:=RightTransversal(G,H);
@@ -3684,7 +3684,7 @@ function GGlobalRepresentation(phi,L0)
 
 	while bool eq false do
 
-//"Bad GloGenerator";
+vprint Galois,1:"GaloisGroupMilstead: Bad GloGenerator";
 		t:=PartialTschirnhausen(phi,50);	//Let t(y) be a random polynomial
 		t:=Evaluate(t,y);
 		t:=Rxy!t;
@@ -3959,7 +3959,7 @@ end function;
 
 function RelativeResolventFilter(W, Candidates,UpperLimit, alpha, M, GloGenerator,p)
 
-	//"Initial Candidates", [TransitiveGroupIdentification(r): r in Candidates];
+	vprint Galois,1:"GaloisGroupMilstead: Initial Candidates", [TransitiveGroupIdentification(r): r in Candidates];
 
 //For now, LowIndexSubgroups up to n^2
 
@@ -3967,7 +3967,7 @@ function RelativeResolventFilter(W, Candidates,UpperLimit, alpha, M, GloGenerato
 	
 	while (Current lt UpperLimit) do
 
-		//"Index", Current;
+		vprint Galois,1:"GaloisGroupMilstead: Index", Current;
 
 		J:=LowIndexSubgroups(W,<Current,Current>);
 
@@ -4110,9 +4110,9 @@ function CCResolvent(G,H,CRoots,GloGenerator,prec)
 	F:=RelativeInvariant(G,H);
 
 	// if VerifyInvariant(F,G,H) then
-		//"Invariant PASSES";
+		vprint Galois,1:"GaloisGroupMilstead: Invariant PASSES";
 	// else
-		//"Invariant FAILS";
+		vprint Galois,1:"GaloisGroupMilstead: Invariant FAILS";
 	// end if;
 
 	CReps:=RightTransversal(G,H);
@@ -4330,7 +4330,7 @@ function CCCheck_Group(G,H,alpha,GloGenerator,prec,p)
 
 	RF:=Zx!RF;
 
-	//"RF",RF;
+	vprint Galois,1:"GaloisGroupMilstead: RF",RF;
 
 	return HasRoot(RF);
 
@@ -4584,18 +4584,17 @@ function PossibleCandidateOrders(N1,s1,T,T1,DL1)
 
 //First find possible upper bound on w.
         K:=PrimeRing(T1);
-//"[N1:K]",Order(N1);
-//"[T1:K]",Degree(T1,K);
-//"[L1:K]",Degree(L1,K);
-//"[T:K]",Degree(T,K);
-//"[T:T1]",Degree(T,K)/Degree(T1,K);
+vprint Galois,1:"GaloisGroupMilstead: [N1:K]",Order(N1);
+vprint Galois,1:"GaloisGroupMilstead: [T1:K]",Degree(T1,K);
+vprint Galois,1:"GaloisGroupMilstead: [T:K]",Degree(T,K);
+vprint Galois,1:"GaloisGroupMilstead: [T:T1]",Degree(T,K)/Degree(T1,K);
 	p:=Prime(K);
 	temp:=Lcm(Order(N1),Degree(T,K));
         tamemult:=Integers()!(Order(N1)/Degree(T1,K))*Integers()!(Degree(T,K)/Degree(T1,K));
         wildbase:=p;
         stemtame := DL1/p^Valuation(DL1,p);
         wildexps:=[0..Integers()!(Order(N1)/Degree(T1,K))*s1*stemtame];
-//"wildexps",wildexps;
+vprint Galois,1:"GaloisGroupMilstead: wildexps",wildexps;
 	for w in wildexps do
           for t in Divisors(tamemult) do
 		finall:=temp * wildbase^w *t;
@@ -4603,7 +4602,7 @@ function PossibleCandidateOrders(N1,s1,T,T1,DL1)
 		Append(~Ord,finall);
           end for;
 	end for;
-//"Possible Orders",Ord;
+vprint Galois,1:"GaloisGroupMilstead: Possible Orders",Ord;
 	return Ord;
 
 end function;
@@ -4650,6 +4649,7 @@ end function;
 
 
 function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
+vprint Galois,1:"GaloisGroupMilstead: TwoSegmentsFiltering";
 
 	Num_Remaining:=[];
 	
@@ -4668,6 +4668,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	Pos_Order:=PossibleCandidateOrders(N1,s1,T,T1,DL1);
 
 	if n lt 35 then
+vprint Galois,1:"GaloisGroupMilstead: Finding transitive subgroups of", W;
 		Can:=Subgroups(W:IsTransitive:=true);
 		C:=[r`subgroup: r in Can];
 		InitialCandidates:=CandidateClasses(C);  //associative array
@@ -4677,11 +4678,10 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 		Second:=[c: c in First| Order(c) in Pos_Order];
 		Num_Remaining[2]:=#Second;
-
 	else 
-
 		min_order:=Min(Pos_Order);
 		max_order:=Max(Pos_Order); //Use list of possible orders to set parameters for calculating initial group candidates as subgroups of W.
+vprint Galois,1:"GaloisGroupMilstead: Finding transitive subgroups of", W,"of order dividing",max_order;
 
 		max_order:=Min(max_order,Order(W));  //Need to limit ourselves to size of W.
 
@@ -4694,15 +4694,15 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 		Second:=First;
 		Num_Remaining[2]:=#Second;
-		
 	end if;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 2:",Num_Remaining;
 
 	PParity:=PolynomialParity(phi);
 	third:=[G: G in Second | (PParity eq GroupParity(G))];
 	
 	Num_Remaining[3]:=#third;
 
-// "#Remaining 3",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 3:",Num_Remaining;
 	if #third eq 1 then
 		return Num_Remaining, InitialCandidates, third, W, WreathBlocks;
 	end if;
@@ -4726,13 +4726,12 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	end for;
 
 	Num_Remaining[4]:=#Fourth;
-// "#Remaining 4",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 4:",Num_Remaining;
 
 	if #Fourth eq 1 then
 		return Num_Remaining, InitialCandidates, Fourth, W, WreathBlocks;
 	end if;
 
-//"4 Remaining", Num_Remaining;
 
 	BTuples:=[];
 
@@ -4775,7 +4774,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[5]:=#Fifth;
 
-// "#Remaining 5",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 5:",Num_Remaining;
 	if #Fifth eq 1 then
 		return Num_Remaining, InitialCandidates, [t[1]: t in Fifth], W, WreathBlocks;
 	end if;
@@ -4812,7 +4811,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[6]:=#Sixth;
 
-// "#Remaining 6",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 6:",Num_Remaining;
 	if #Sixth eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Sixth], W, WreathBlocks;
 	end if;
@@ -4866,7 +4865,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[7]:=#Seventh;
 
-// "#Remaining 7",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 7:",Num_Remaining;
 	if #Seventh eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Seventh], W, WreathBlocks;
 	end if;
@@ -4888,7 +4887,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[8]:=#Eighth;
 	
-// "#Remaining 8",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 8:",Num_Remaining;
 	if #Eighth eq 1 then
 		return Num_Remaining, InitialCandidates, [s[1]: s in Eighth], W, WreathBlocks;
 	end if;
@@ -4947,18 +4946,16 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	 
 	Candidates:=[Ninth[i][1] : i in [1..#Ninth]];     //Later: after 8th criteria.
 
-// "#Remaining 9",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 9:",Num_Remaining;
 	if #Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, Candidates, W, WreathBlocks;
 	end if;
-
-//"9 Remaining", Num_Remaining;
 
 	Candidates:=GlobalGalFilter(Candidates,phi);
 
 	Num_Remaining[10]:=#Candidates;
 
-// "#Remaining 10",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 10:",Num_Remaining;
 	if #Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, Candidates, W, WreathBlocks;
 	end if;
@@ -4991,7 +4988,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[11]:=#New_Candidates;		
 	
-// "#Remaining 11",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining 11:",Num_Remaining;
 	if #New_Candidates eq 1 then
 		return Num_Remaining, InitialCandidates, New_Candidates, W, WreathBlocks;
 	end if;
@@ -5033,9 +5030,8 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	
 	//return Num_Remaining, InitialCandidates, Eleventh, W, WreathBlocks;
 
-//"Numbers:",Num_Remaining; //SP
-//"Orders",[Order(g):g in Candidates];
-//"Absolute!!!";
+vprint Galois,1:"GaloisGroupMilstead: Numbers:",Num_Remaining; //SP
+vprint Galois,1:"GaloisGroupMilstead: Orders",[Order(g):g in Candidates];
 
 	if NeedResolvent(Sn,DirectProduct(Sym(1),DirectProduct(Sym(1),Sym(n-2))),New_Candidates) then  		//H:=S_1 x S_1 x S_{n-2}
 
@@ -5049,7 +5045,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[#Num_Remaining +1]:=#C1;
 
-// "#Remaining C1",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining C1:",Num_Remaining;
 //a:=0; 1/a;
 	if #C1 eq 1 then
 		return Num_Remaining, InitialCandidates, C1, W, WreathBlocks;
@@ -5067,7 +5063,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining[#Num_Remaining +1]:=#C2;
 
-// "#Remaining C2",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining C2:",Num_Remaining;
 	if #C2 eq 1 then
 		return Num_Remaining, InitialCandidates,C2, W, WreathBlocks;
 	end if;
@@ -5086,7 +5082,7 @@ function Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1)
 	Num_Remaining[#Num_Remaining +1]:=#C3;
 
 
-// "#Remaining C3",Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining C3:",Num_Remaining;
 	return Num_Remaining, InitialCandidates, C3, W, WreathBlocks;
 
 end function;
@@ -5094,7 +5090,7 @@ end function;
 
 
 function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
-"Two Segments";
+vprint Galois,1:"GaloisGroupMilstead: Two Segments";
 //First, we reduce coefficients of phi.
 	n:=Degree(phi);
 	p:=Prime(PrimeRing(T));
@@ -5107,14 +5103,14 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	Num_Remaining, InitialCandidates, Candidates, W, WreathBlocks:=Two_Segments_Filtering(phi,L1, L0, Prev_Grp, T,T1); //InitialCandidates is an array.  Candidates is the collection of remaining keys.
 
-//"Numbers:",Num_Remaining; //SP
-//"Orders",[Order(g):g in Candidates];
+vprint Galois,1:"GaloisGroupMilstead: Numbers:",Num_Remaining; //SP
+vprint Galois,1:"GaloisGroupMilstead: Orders",[Order(g):g in Candidates];
 // SP	//if (n le TransitiveGroupDatabaseLimit()) and (#Candidates eq 1) then
 	if (#Candidates eq 1) then
 		//Num_Remaining;
 		//phi;
 		//TransitiveGroupIdentification(Candidates[1]);
-// "#Remaining",#Num_Remaining,Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: #Remaining",#Num_Remaining,Num_Remaining;
 		return Candidates[1],Num_Remaining;						//Early exit
 	end if;
 	if n gt TransitiveGroupDatabaseLimit() then 
@@ -5124,7 +5120,7 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 //print Candidates;
 //print "bis hier und nicht weiter";
 //a:=0; 2/a;
-//" ----------- weiter ";
+vprint Galois,1:"GaloisGroupMilstead:  ----------- weiter ";
 //More than one Candidate remains so we get the necessary data to form resolvents.
 
 	GloGenerator, h1, Block_Length,Wprime,WreathBlocksprime:=GGlobalRepresentation(phi,L0);   //h1 is embedding map.
@@ -5173,7 +5169,7 @@ function Two_Segments_Eisenstein(phi,L1, L0, Prev_Grp, T,T1)
 
 	if (W subset Wprime) then
 
-		//"BURP!!! ";
+		vprint Galois,1:"GaloisGroupMilstead: BURP!!! ";
 
 		sigma:=MatchBlocks(WreathBlocksprime,SubfieldBlocks,n);
 		alpha:=ReOrderRoots(sigma,alpha);
@@ -5202,7 +5198,7 @@ end function;
 
 
 function Three_Segments_Eisenstein(L)
-"Three Segments";
+vprint Galois,1:"GaloisGroupMilstead: Three Segments";
 
 	Qp:=PrimeRing(L[1]);
 
@@ -5233,7 +5229,7 @@ end function;
 
 
 function Eisenstein_Case(phi:global:=false)
-// "Eisenstein_Case";
+vprint Galois,1:"GaloisGroupMilstead: Eisenstein_Case";
 	if IsEisenstein(phi) eq false then
 		error "Error:  Input polynomial is not Eisenstein";
 	end if;
@@ -5257,7 +5253,7 @@ function Eisenstein_Case(phi:global:=false)
 	my_discriminant:=Integers()!my_discriminant;
 
 	if prec le my_discriminant then
-//"Discriminant bug detected, fixed";
+vprint Galois,1:"GaloisGroupMilstead: Precision incresed to",p,"^",my_discriminant + 3;
 		
 		Zp:=pAdicRing(p, my_discriminant + 3);
 		Zx:=PolynomialRing(Zp);
@@ -5283,7 +5279,7 @@ function Eisenstein_Case(phi:global:=false)
 	if (Number_Of_Segments(phi) eq 1) and (n eq (p^(Valuation(n,p)))) then
 		 return One_Segment(phi);
 	end if;
-// "AutomorphismGroup";
+vprint Galois,1:"GaloisGroupMilstead: AutomorphismGroup";
 	Autoo:=AutomorphismGroup(K,Qp);  //Maybe not do this here.
 
 	if Order(Autoo) eq n then
@@ -5949,7 +5945,6 @@ end function;
 
 
 function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,BaseField,phi_0, resexp:A:=0, PParity:="")
-
 	//resexp:  the number that roots of residual polynomials must be raised to when computing T/K
 
 	resexp:=Integers()!resexp;
@@ -6016,12 +6011,14 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 	Pos_Order:=PossibleCandidateOrders(N1,s1,T,T1,DL1);
 
 	if n lt 35 then
+vprint Galois,1:"GaloisGroupMilstead: Finding transitive subgroups of", W;
 
 		Can:=Subgroups(W:IsTransitive:=true);
 		C:=[r`subgroup: r in Can];
 
 		First:=Keys(CandidateClasses(C));
 		Num_Remaining[1]:=#First;
+vprint Galois,1:"GaloisGroupMilstead: After 1", Num_Remaining;
 
 		Second:=[c: c in First| Order(c) in Pos_Order];
 		Num_Remaining[2]:=#Second;
@@ -6031,20 +6028,20 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 		max_order:=Max(Pos_Order); //Use list of possible orders to set parameters for calculating initial group candidates as subgroups of W.
 
 		max_order:=Min(max_order,Order(W));  //Need to limit ourselves to size of W.
-
+vprint Galois,1:"GaloisGroupMilstead: Finding transitive subgroups wof", W,"whose order divides",max_order;
 		Can:=Subgroups(W:IsTransitive:=true, OrderMultipleOf:=min_order, OrderDividing:=max_order );
 		C:=[r`subgroup: r in Can];
 		InitialCandidates:=CandidateClasses(C);  //associative array
 
 		First:=Keys(InitialCandidates);
 		Num_Remaining[1]:=#First;
-
+vprint Galois,1:"GaloisGroupMilstead: After 1", Num_Remaining;
 		Second:=First;
 		Num_Remaining[2]:=#Second;
 
 	end if;
 
-//"After 2", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 2", Num_Remaining;
 
 	if Type(PParity) eq MonStgElt then   //PParity not specified.
 
@@ -6070,6 +6067,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[3]:=#third;
 
+vprint Galois,1:"GaloisGroupMilstead: After 3", Num_Remaining;
 	if #third le 1 then
 		return third, Num_Remaining;
 	end if;
@@ -6108,7 +6106,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[4]:=#Fourth;
 
-//"After 4", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 4:", Num_Remaining;
 
 	if #Fourth le 1 then
 		return Fourth, Num_Remaining;
@@ -6153,7 +6151,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[5]:=#Fifth;
 
-//"After 5", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 5:", Num_Remaining;
 	
 	if #Fifth le 1 then
 
@@ -6171,7 +6169,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 		Candidate:=m[1];
 		CurrentSet:=m[2];  //of the form {<B1, [S]>}.
 
-//"#B1",#CurrentSet;
+vprint Galois,1:"GaloisGroupMilstead: #B1",#CurrentSet;
 
 		BSU_set:={};
 
@@ -6195,7 +6193,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[6]:=#Sixth;
 
-//"After 6", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 6:", Num_Remaining;
 
 	if #Sixth le 1 then
 		return [s[1]: s in Sixth], Num_Remaining;
@@ -6250,7 +6248,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[7]:=#Seventh;
 
-//"After 7", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 7:", Num_Remaining;
 
 	if #Seventh le 1 then
 		return [s[1]: s in Seventh], Num_Remaining;
@@ -6274,7 +6272,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 
 	Num_Remaining[8]:=#Eighth;
 
-//"After 8", Num_Remaining;
+vprint Galois,1:"GaloisGroupMilstead: After 8:", Num_Remaining;
 
 	if #[r[1]: r in Eighth] le 1 then
 		return [r[1]: r in Eighth], Num_Remaining;
@@ -6331,6 +6329,7 @@ function Sinclair_TwoSegmentCase(Gal1,N1, vertices, slopes,residualpolynomials,B
 	end for;
 
 	Num_Remaining[9]:=#Ninth;
+vprint Galois,1:"GaloisGroupMilstead: After 9:", Num_Remaining;
 	 
 	Candidates:=[Ninth[i][1] : i in [1..#Ninth]];
 
@@ -6355,13 +6354,13 @@ function Sinclair_ThreeSegmentCase(vertices, slopes,residualpolynomials,BaseFiel
 	Gal1:=WreathFactors[1];
 	Candidates:=[];
 
-//"Num N1", #PossibleN1;
+vprint Galois,1:"GaloisGroupMilstead: Num N1", #PossibleN1;
 
 	if Type(PParity) eq MonStgElt then   //PParity not specified.
 
 		for N1 in PossibleN1 do
 
-//"N1", TransitiveGroupIdentification(N1);
+vprint Galois,1:"GaloisGroupMilstead: N1", TransitiveGroupIdentification(N1);
 
 			if Type(A) eq RngIntElt then  //Automorphism group not specified
 
@@ -6383,7 +6382,7 @@ function Sinclair_ThreeSegmentCase(vertices, slopes,residualpolynomials,BaseFiel
 
 		for N1 in PossibleN1 do
 
-//"N1", TransitiveGroupIdentification(N1);
+vprint Galois,1:"GaloisGroupMilstead: N1", TransitiveGroupIdentification(N1);
 
 			if Type(A) eq RngIntElt then  //Automorphism group not specified
 
