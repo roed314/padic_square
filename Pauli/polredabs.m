@@ -1071,7 +1071,6 @@ return all Monge reductions of Phi}
     tauL := TotallyRamifiedExtension(U,psi);
     thisphi, nu, thisalpha := EisensteinForm(tauL);
     psi01 := Coefficient(psi,0) div p;
-"psi01",psi01;
     M join:= pol_red_padic_sub(thisphi,Zpx!nu,thisalpha,psi01);
   end for;
   if distinguished then
