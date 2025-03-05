@@ -200,8 +200,7 @@ alpha is a root of phi and nu(alpha) a uniformizing element in the extensions ge
 end intrinsic;
 
 
-
-intrinsic ResidualPolynomial(phi) -> .
+intrinsic ResidualPolynomial(phi:absolute:=false) -> .
 {
 The residual polynomials of the segments of the ramfication polygon of phi.
 }
@@ -209,17 +208,31 @@ The residual polynomials of the segments of the ramfication polygon of phi.
   if IsEisenstein(phi) then
     nu := Parent(phi)![0,1];
     K<alpha> := TotallyRamifiedExtension(CoefficientRing(phi),phi);
-  else
-    phi, nu, alpha := EisensteinForm(phi); 
+    return ResidualPolynomial(phi,nu,alpha);
+  elif absolute then
+    psi, nu, alpha := EisensteinForm(phi); 
+    return ResidualPolynomial(psi,nu,alpha);
+  else  
+    _ , nu, alpha := EisensteinForm(phi); 
+    pi := Evaluate(nu,alpha);
+    psi := CharacteristicPolynomial(pi);
+    K := CoefficientRing(psi);
+    L := TotallyRamifiedExtension(K,psi);
+    X := Polynomial(K,[0,1]);
+    return ResidualPolynomial(psi,X,L.1);
   end if;
-  return ResidualPolynomial(phi,nu,alpha);
 end intrinsic;
 
 intrinsic ResidualPolynomialClasses(phi::RngUPolElt:with_trans:=false,conjugates:=false) -> .
 {The residual polynomial classes of an Eisenstein polynomial phi}
+
       if not IsEisenstein(phi) then
-        error "ResidualPolynomialClasses polynomial",phi,"is not Eisenstein";
+        conjugates := true;
+        _ , nu, alpha := EisensteinForm(phi); 
+        pi := Evaluate(nu,alpha);
+        phi := CharacteristicPolynomial(pi);
       end if;
+
       Kx<x> := Parent(phi);
       K := CoefficientRing(phi);
       RK, KtoRK := ResidueClassField(K);
@@ -291,6 +304,14 @@ intrinsic ResidualPolynomialDistinguished(phi::RngUPolElt:conjugates:=false) -> 
 The distinguished (minimal) representative of the residual polynomial class of an Eisenstein polynomial phi
 along with the Eisenstein polynomials that yield th distinguished representative.
 }
+
+      if not IsEisenstein(phi) then
+        conjugates := true;
+        _ , nu, alpha := EisensteinForm(phi); 
+        pi := Evaluate(nu,alpha);
+        phi := CharacteristicPolynomial(pi);
+      end if;
+
           K := CoefficientRing(phi);
           Kx<x> := PolynomialRing(K);
           L<alpha> := TotallyRamifiedExtension(K,phi);
@@ -926,7 +947,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
           return Contraction2(nuexp,nu);
         end function;
         
-        // reduction of tame part
+        // reduction of constant coefficient mod pi^2
         vprint Monge,2:"PolRedPadic: reduction with alpha -> alpha + theta * nu(alpha)";
         nuexp2, nuexp := Expansion2(Phi,nu : limit := easylimit);
         phi0 := nuexp[1];
@@ -938,45 +959,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         vprint Monge,1: "PolRedPadic: m = 1 , w(1) =",r1,", eta*S1 =",S1eta;
         phi01 := RL!Evaluate(nuexp2[1][2],alpha);
         
-        function min01()
-          S1eta01 := S1eta-phi01;
-          for s in [0..q-2] do // bad when RL is big
-            xis := xi^s;
-            if xis ne 0 then
-              roots := Roots(S1eta01+xis);
-              if #roots gt 0 then
-                return xis,[r[1]:r in roots];
-              end if;
-            end if;
-          end for;
-          //return phi01, [0];
-          error "min01 failed";
-        end function;
-        function min01faster()
-          S1eta01 := S1eta-phi01;
-          a := Log(phi01);
-          d, s0, _ := Xgcd(n,q-1);
-          k, b  := Quotrem(a,d);
-          t0 := (-s0 * k) mod (q-1);
-          c := (q-1) div d;
-          t := t0;
-          tmin := t0;
-          repeat
-            t := (t+c) mod (q-1);   
-            if t lt tmin then tmin := t; end if; 
-          until t eq t0; 
-          xis := xi^tmin-1;
-          roots := Roots(S1eta01+xis);
-          if #roots eq 0 then error "min01faster failed"; end if;
-          return xis, [r[1]:r in roots];
-        end function;
-
-        new01, Thetas := min01();
-        //new01, Thetas := min01faster();
-        vprintf Monge,2:"PolRedPadic:   transforming phi*_(0,1) from %o to %o\n",phi01,new01;
         new_phis := {};
-
-
         Thetas := [r[1]:r in Roots(S1eta-(phi01-psi01R))];
         vprintf Monge,2:"PolRedPadic:   transforming phi*_(0,1) from %o to %o\n",phi01,psi01R;
         if Thetas eq [] then
@@ -1088,6 +1071,7 @@ return all Monge reductions of Phi}
     tauL := TotallyRamifiedExtension(U,psi);
     thisphi, nu, thisalpha := EisensteinForm(tauL);
     psi01 := Coefficient(psi,0) div p;
+"psi01",psi01;
     M join:= pol_red_padic_sub(thisphi,Zpx!nu,thisalpha,psi01);
   end for;
   if distinguished then
