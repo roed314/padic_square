@@ -304,7 +304,6 @@ intrinsic ResidualPolynomialDistinguished(phi::RngUPolElt:conjugates:=false) -> 
 The distinguished (minimal) representative of the residual polynomial class of an Eisenstein polynomial phi
 along with the Eisenstein polynomials that yield th distinguished representative.
 }
-
       if not IsEisenstein(phi) then
         conjugates := true;
         _ , nu, alpha := EisensteinForm(phi); 
@@ -323,6 +322,8 @@ along with the Eisenstein polynomials that yield th distinguished representative
           q := #Fq;
           xi := PrimitiveElement(Fq);
 
+      vprintf Monge, 4: "ResidualPolynomialDistinguished: %o with slopes %o\n",phi,slopes;  
+
         function residual_polynomial_distinguished_sub(phi);
           L<alpha> := TotallyRamifiedExtension(K,phi);
           LX<X> := PolynomialRing(L);
@@ -340,6 +341,7 @@ along with the Eisenstein polynomials that yield th distinguished representative
             s_base := [0];
             for k:=n to 0 by -1 do
               Alk := Coefficient(A[l],k);
+              vprintf Monge, 4: "ResidualPolynomialDistinguished: slope %o, %o-th monomial %o\n",slopes[l],k,Alk;
               if Alk ne 0 then
                 alk := Log(Alk) mod (q-1);
                 gtk := (g+(t-d)*k) mod (q-1);
@@ -348,24 +350,49 @@ along with the Eisenstein polynomials that yield th distinguished representative
                   new_s_diff := Lcm(s_diff,(q-1) div c);
                   minexp := q;
                   for sb in s_base do
+                    if sb eq 0 then
+                      cc, s0, h := Xgcd(gtk*s_diff,q-1);
+                      i := (-(alk div cc)) mod (q-1);
+                      r := alk mod cc;
+                      s := (i*s0) mod (q-1);
+" ",l,"- th poly",k,"-th coeff log was",alk,"now is",r,"with s0 =",s;
+                    if r lt minexp then
+                      minexp := r;
+                      new_s_base := [s];
+                    elif r eq minexp then
+                      Append(~new_s_base,s);
+//"0 new_s_base",new_s_base;
+                    end if;
+                  else
                     s := sb;
+                    vprintf Monge, 2: "ResidualPolynomialDistinguished:    solutions %o + n*%o\n",s,s_diff;  
                     while s lt new_s_diff do
                       thisexp := (alk + s*gtk) mod (q-1);
                       if thisexp lt minexp then
+" ",l,"- th poly",k,"-th coeff log was",alk,"now is",thisexp,"with s =",s,"started with",sb;
                         minexp := thisexp;
+//new_s := s;
                         new_s_base := [s];
                       elif thisexp eq minexp then
-                        Append(~new_s_base,s);           
+                        Append(~new_s_base,s);
+//"new_s_base",new_s_base;           
                       end if;
                       s := s+s_diff;
                     end while;
+end if;
                   end for;
+//if not new_s eq ss then error "new fast s failed with",phi; end if;
                   s_diff := new_s_diff;
                   s_base := new_s_base;
                 end if;
               end if; 
             end for;
           end for;
+          return s_base, s_diff;
+       end function;
+
+       function residual_polynomial_phis(s_base,s_diff)
+          vprintf Monge, 2: "ResidualPolynomialDistinguished:    final difference: %o\n",s_diff;  
           minphis := [];
           for sb in s_base do
             s := sb;
@@ -376,11 +403,13 @@ along with the Eisenstein polynomials that yield th distinguished representative
               s := s+s_diff;
             end while; 
           end for;
+          vprintf Monge, 4: "ResidualPolynomialDistinguished:    #phis = %o\n",#minphis;  
           return minphis;
        end function;
 
        if not conjugates then
-         As := residual_polynomial_distinguished_sub(phi);
+         base, delta := residual_polynomial_distinguished_sub(phi);
+         return residual_polynomial_phis(base,delta);
        else
          As := [];
          gaut, maut := AutomorphismGroup(K);
@@ -388,10 +417,11 @@ along with the Eisenstein polynomials that yield th distinguished representative
          for tau in aut do
            vprintf Monge,1: "ResidualPolynomialClasses: %o |-> %o\n",KtoFq(K.1),KtoFq(tau(K.1));
            tauphi := Kx![tau(c): c in Coefficients(phi)]; 
-           As cat:= residual_polynomial_distinguished_sub(tauphi);
+           base, delta := residual_polynomial_distinguished_sub(tauphi);
+           As cat:= residual_polynomial_phis(base,delta);
          end for;           
          Sort(~As,func<x,y|ResidualPolynomialCompare(x[1],y[1])>);
-         vprint Monge, 2: "ResidualPolynomialDistinguished: sorted",[<a[1],a[2]> : a in As];  
+         vprint Monge, 2: "ResidualPolynomialDistinguished: sorted",[a[1] : a in As];  
        end if;
        phis := [a[2]: a in As | a[1] eq As[1][1]];
        return As[1][1],phis;
