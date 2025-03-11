@@ -409,7 +409,9 @@ end if;
 
        if not conjugates then
          base, delta := residual_polynomial_distinguished_sub(phi);
-         return residual_polynomial_phis(base,delta);
+         As := residual_polynomial_phis(base,delta);
+         phis := [a[2]: a in As | a[1] eq As[1][1]];
+         return As[1][1],phis;
        else
          As := [];
          gaut, maut := AutomorphismGroup(K);
