@@ -1099,22 +1099,28 @@ intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=tr
   e0 := Degree(phi);
 
   gaut, maut := AutomorphismGroup(Lur);
+//"gaut",gaut,"maut",maut;
   aut := [ maut(tau) : tau in gaut ];
+//"aut",aut;
   M := {};
   for tau in aut do
-     vprintf Monge,1: "PolRedPadic: %o |-> %o\n",Lur.1,tau(Lur);
-     tauphi := Kx![ tau(c): c in Coefficients(phi)]; 
+     vprintf Monge,1: "PolRedPadic: %o |-> %o\n",Lur.1,tau(Lur.1);
+//"tau",tau;
+//"Kx",Kx;
+//"phi",phi,Coefficients(phi);
+//"for"; for c in Coefficients(phi) do "----";c; Parent(c); tau(c); Parent(tau(c)); end for;
+     tauphi := Lurx![tau(c): c in Coefficients(phi)];
      psi := PolRedPadicTame(tauphi);
      U, LurtoU := ResidueClassField(Lur);
      psi0 := ConstantCoefficient(psi);
      psi01 := LurtoU(psi0 div pi);
      psi01coeffs := Eltseq(psi01);
-     Psi01 := Lurx!psi01coeffs;
-     Psi := Lurx!nu^e0+Psi01*p;
+     Psi01 := Kx!psi01coeffs;
+     Psi := Kx!nu^e0+Psi01*p;
      Include(~M,Psi);
   end for;
   if distinguished then
-    return Distinguished(M);
+    return Distinguished(M:nu:=nu);
   else
     return M;
   end if;
@@ -1163,7 +1169,7 @@ intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
     p := Prime(K);
     if IsEisenstein(Phi) then
       if Degree(Phi) mod p ne 0 then
-        M := PolRedPadicTame(Phi);
+        M := PolRedPadicTame(Phi:distinguished:=distinguished);
       else
         M := MongeReduced(Phi); 
       end if;
