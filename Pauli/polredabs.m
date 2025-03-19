@@ -1169,7 +1169,7 @@ intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
     p := Prime(K);
     if IsEisenstein(Phi) then
       if Degree(Phi) mod p ne 0 then
-        M := PolRedPadicTame(Phi:distinguished:=distinguished);
+        M := PolRedPadicTame(Phi);
       else
         M := MongeReduced(Phi); 
       end if;
@@ -1180,7 +1180,7 @@ intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
       L := Parent(alpha);
       psi := DefiningPolynomial(L);
       if Degree(psi) mod p ne 0 then
-        M := PolRedPadicTame(Phi,nu,alpha);
+        M := PolRedPadicTame(Phi,nu,alpha:distinguished:=distinguished);
       else
         M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
       end if;
