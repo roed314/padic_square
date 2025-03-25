@@ -34,22 +34,24 @@ columns = [
     ("slopes", "text"),
     ("heights", "text"),
     ("means", "text"),
-    ("tilts", "text"),
-    ("small_tilts", "text"),
-    ("tiny_tilts", "text"),
+    ("rams", "text"),
+    ("small_rams", "text"),
+    ("tiny_rams", "text"),
     ("field_count", "integer"),
     ("packet_count", "integer"),
     ("ambiguity", "smallint"),
-    ("mass", "double precision"),
+    ("mass_absolute", "double precision"),
+    ("mass_relative", "double precision"),
+    ("mass_absolute_display", "text"),
+    ("mass_relative_display", "text"),
     ("mass_stored", "text"),
     ("mass_found", "double precision"),
-    ("mass_display", "text"),
     ("all_stored", "boolean"),
     ("slope_multiplicities", "smallint[]"),
     ("wild_segments", "smallint"),
     ("poly", "text"),
     ("label_absolute", "text"),
-    ("tilts_absolute", "text"),
+    ("rams_absolute", "text"),
     ("top_slope", "double precision"),
 ]
 
@@ -334,9 +336,9 @@ def write_polynomials(poly_folder, basepairs, field_cache, field_data, batch_siz
 def means_to_heights(means, p, etame):
     return [m * (etame * p**i) for (i, m) in enumerate(means, 1)]
 
-def tilts_to_heights(tilts, p):
-    w = len(tilts)
-    return [(p-1)*sum(p**(k-j) * tilts[j] for j in range(k+1)) for k in range(w)]
+def rams_to_heights(rams, p):
+    w = len(rams)
+    return [(p-1)*sum(p**(k-j) * rams[j] for j in range(k+1)) for k in range(w)]
 
 def slopes_to_heights(slopes, p, etame):
     heights = []
@@ -348,7 +350,7 @@ def slopes_to_heights(slopes, p, etame):
         phipk *= p
     return heights
 
-def heights_to_tilts(heights, p):
+def heights_to_rams(heights, p):
     w = len(heights)
     return [heights[0] / (p - 1)] + [(heights[k] - p*heights[k-1]) / (p - 1) for k in range(1,w)]
 
@@ -410,7 +412,7 @@ def respoly_rep(rp, slopes):
     return rep
 
 class pAdicSlopeFamily:
-    def __init__(self, base, f=1, etame=1, slopes=[], means=[], tilts=[], base_data=None, field_cache=None):
+    def __init__(self, base, f=1, etame=1, slopes=[], means=[], rams=[], base_data=None, field_cache=None):
         if base_data is None:
             base_data = db.lf_fields.lucky({"new_label": base}, cache_cols)
         self.base, self.f, self.etame, self.base_aut, self.oldbase = base, f, etame, base_data["aut"], base_data["label"]
@@ -421,19 +423,19 @@ class pAdicSlopeFamily:
         self.rf0 = base_data["rf"]
         # For now, these slopes are Serre-Swan slopes, not Artin-Fontaine slopes
         assert p.is_prime()
-        self.w = w = max(len(L) for L in [slopes, means, tilts])
-        # We support tamely ramified fields by specifying empty slopes/tilts/heights
-        # slopes/tilts -> heights -> tilts/slopes
+        self.w = w = max(len(L) for L in [slopes, means, rams])
+        # We support tamely ramified fields by specifying empty slopes/rams/heights
+        # slopes/rams -> heights -> rams/slopes
         if means:
             heights = means_to_heights(means, p, etame)
-        elif tilts:
-            heights = tilts_to_heights(tilts, p)
+        elif rams:
+            heights = rams_to_heights(rams, p)
         elif slopes:
             heights = slopes_to_heights(slopes, p, etame)
         else:
             heights = []
-        if w and not tilts:
-            tilts = heights_to_tilts(heights, p)
+        if w and not rams:
+            rams = heights_to_rams(heights, p)
         if w and not slopes:
             slopes = heights_to_slopes(heights, p, etame)
         if w and not means:
@@ -441,22 +443,22 @@ class pAdicSlopeFamily:
         self.slopes = slopes
         self.artin_slopes = [s + 1 for s in slopes]
         # Visible is absolute, for use in matching with fields
-        base_tilts = base_data.get("tilts")
-        if base_tilts is None:
+        base_rams = base_data.get("rams")
+        if base_rams is None:
             if e0.gcd(p) == 1:
-                base_tilts = []
+                base_rams = []
             else:
                 base_slopes = [x - 1 for x in str_to_QQtup(db.lf_fields.lucky({"new_label":base}, "visible"))]
-                base_tilts = heights_to_tilts(slopes_to_heights(base_slopes, p, 1), p)
-        if base_tilts:
-            self.tilts_absolute = sort_rams([etame * ram for ram in base_tilts] + tilts, p)
-            self.visible = [x + 1 for x in heights_to_slopes(tilts_to_heights(self.tilts_absolute, p), p, e0tame*etame)]
+                base_rams = heights_to_rams(slopes_to_heights(base_slopes, p, 1), p)
+        if base_rams:
+            self.rams_absolute = sort_rams([etame * ram for ram in base_rams] + rams, p)
+            self.visible = [x + 1 for x in heights_to_slopes(rams_to_heights(self.rams_absolute, p), p, e0tame*etame)]
         else:
-            self.tilts_absolute = tilts
+            self.rams_absolute = rams
             self.visible = [x/e0tame + 1 for x in slopes]
         self.heights = heights
         self.means = means
-        self.tilts = tilts
+        self.rams = rams
         self.pw = pw = p**w
         self.e = e = etame * pw
         self.n = n = e * f
@@ -479,14 +481,14 @@ class pAdicSlopeFamily:
             self.c_absolute = f * (c0 / f0 - e0 + e)
 
     @lazy_attribute
-    def tiny_tilts(self):
+    def tiny_rams(self):
         p, etame = self.p, self.etame
-        return [t / (etame * p**i) for (i, t) in enumerate(self.tilts, 1)]
+        return [t / (etame * p**i) for (i, t) in enumerate(self.rams, 1)]
 
     @lazy_attribute
-    def small_tilts(self):
+    def small_rams(self):
         p = self.p
-        return [(p - 1) * t for t in self.tiny_tilts]
+        return [(p - 1) * t for t in self.tiny_rams]
 
     @lazy_attribute
     def top_slope(self):
@@ -514,100 +516,66 @@ class pAdicSlopeFamily:
         return len(set(self.slopes))
 
     @lazy_attribute
-    def bands(self):
-        return [((0, 1+h), (self.e, h), (0, 1+s), (self.e, s)) for (h, s) in zip(self.means, self.slopes)]
-
-    @lazy_attribute
-    def black(self):
-        return [(0, 1), (self.e, 0)]
-
-    @lazy_attribute
-    def virtual_green(self):
-        p, e, w = self.p, self.e, self.w
-        last_slope = {}
-        for i, s in enumerate(self.slopes, 1):
-            last_slope[s] = i
-        ans = []
-        for i, (h, s) in enumerate(zip(self.means, self.slopes), 1):
-            u = e*frac(h)
-            v = 1 + floor(h)
-            if last_slope[s] == i:
-                if (e*frac(h)).valuation(p) == w - i: # might be wrong
-                    code = 1
-                else:
-                    code = 0
+    def dots(self):
+        p, e, f, w = self.p, self.e, self.f, self.w
+        # We include a large dot at the origin exactly when there is a tame part
+        dots = [("d", 0, 0, gcd(p**f - 1, self.etame) > 1)]
+        sigma = ZZ(1)
+        # It's convenient to add 0 at the beginning; this transforms our indexing into 1-based and helps with cases below the first band
+        means = [0] + self.means
+        slopes = [0] + self.slopes
+        small_rams = [0] + self.small_rams
+        maxslope = slopes[-1]
+        slopes.append(maxslope+1) # convenient since the last band is the final one in its sequence
+        while True:
+            j, i = sigma.quo_rem(self.e)
+            height = j + i / e
+            if height > maxslope:
+                break
+            sigma += 1
+            if i == 0 or i.valuation(p) > w:
+                index = 0
             else:
-                code = -1
-            ans.append((u, v, code))
-        return ans
-
-    @lazy_attribute
-    def green(self):
-        return [(u, v, bool(code)) for (u, v, code) in self.virtual_green if code >= 0]
-
-    @lazy_attribute
-    def solid_green(self):
-        return [(u, v) for (u, v, solid) in self.green if solid]
-
-    def _set_redblue(self):
-        self.blue = []
-        self.red = []
-        p, e, w = self.p, self.e, self.w
-        for i, (s, (u, v, code)) in enumerate(zip(self.slopes, self.virtual_green), 1):
-            if u.denominator() == 1 and code == -1:
-                self.blue.append((u, v, True))
-            u = floor(u + 1)
-            #print("Starting", i, s, u, v, code, e, w)
-            while v <= 1 + s - u/e:
-                #print("While", u, v, 1 + s - u/e, u.valuation(p), w-i)
-                if u == e:
-                    u = ZZ(0)
-                    v += 1
-                if v == 1 + s - u/e:
-                    self.red.append((u, v, False))
-                elif u.valuation(p) == (w - i):
-                    self.blue.append((u, v, True))
-                u += 1
-        self.blue = sorted(set(self.blue))
-        self.red = sorted(set(self.red))
-
-    @lazy_attribute
-    def blue(self):
-        self._set_redblue()
-        return self.blue
-
-    @lazy_attribute
-    def red(self):
-        self._set_redblue()
-        return self.red
+                index = w - i.valuation(p)
+            if height < means[index]:
+                # invisible Z-point
+                continue
+            if height in means:
+                band = means.index(height)
+                if small_rams[band] != self.e0 and slopes[band] < slopes[band+1]:
+                    # A-point: green square
+                    dots.append(("a", i, j, True))
+                    continue
+            if height >= slopes[index]:
+                # C-point: red diamond
+                dots.append(("c", i, j, height in self.slopes))
+            else:
+                # B-point: blue circle
+                dots.append(("b", i, j, True))
+        return dots
 
     @lazy_attribute
     def poly(self):
         p, f = self.p, self.f
-        pts = ([("a", u, v) for (u, v) in self.solid_green] +
-               [("b", u, v) for (u, v, solid) in self.blue] +
-               [("c", u, v) for (u, v, solid) in self.red])
-        names = [f"{c}{self.e*(v-1)+u}" for (c, u, v) in pts]
-        if gcd(p**f - 1, self.etame) > 1:
-            names.append("d")
+        pts = [(c, i, j) for (c, i, j, big) in self.dots if big]
+        names = [f"{c}{self.e*j+i}" for (c, i, j) in pts]
         if self.e0 > 1:
             names.append("pi")
         R = PolynomialRing(ZZ, names)
         S = PolynomialRing(R, "x")
         if self.e == 1:
             return S.gen()
-        if "d" in names:
-            d = R.gen(names.index("d"))
-        else:
-            d = 1
         x = S.gen()
         if self.e0 > 1:
             pi = R.gens()[-1]
         else:
             pi = p
-        poly = x**self.e + d*pi
+        poly = x**self.e
         for i, (c, u, v) in enumerate(pts):
-            poly += R.gen(i) * pi**v * x**u
+            poly += R.gen(i) * pi**(v+1) * x**u
+        if not self.dots[0][3]:
+            # No pi*d_0 term, so need to add just pi
+            poly += pi
         return poly
 
     @lazy_attribute
@@ -618,7 +586,7 @@ class pAdicSlopeFamily:
         if self.pw != self.e:
             L.append((self.pw, 0))
         cur = (self.pw, 0)
-        for r, nextr in zip(self.tilts, self.tilts[1:] + [None]):
+        for r, nextr in zip(self.rams, self.rams[1:] + [None]):
             x = cur[0] // p
             y = cur[1] + x * r
             cur = (x, y)
@@ -786,46 +754,47 @@ class pAdicSlopeFamily:
             if a in possreps:
                 minreps.append(a)
 
-    #@lazy_attribute
-    #def possible_residual_polynomials(self):
-    #    n = self.n
-    #    for phi0 in 
-
     @lazy_attribute
     def gamma(self):
         if self.f_absolute == 1:
-            return len(self.red)
+            return len([dot for dot in self.dots if dot[0] == "c" and dot[-1]])
         e = self.e
         gamma = 0
-        for (u, v, _) in self.red:
-            s = v + u/e - 1
-            cnt = self.slopes.count(s)
-            gamma += gcd(cnt, self.f_absolute)
+        for (code, i, j, critical) in self.dots:
+            if code == "c" and critical:
+                s = j + i/e
+                cnt = self.slopes.count(s)
+                gamma += min(cnt, self.f_absolute)
         return gamma
-
-    @lazy_attribute
-    def poly_count(self):
-        p, f, alpha, beta, gamma = self.p, self.f_absolute, len(self.solid_green), len(self.blue), self.gamma
-        q = p**f
-        return (q-1)**alpha * q**beta * p**gamma
 
     @lazy_attribute
     def mass_stored(self):
         return sum([ZZ(1) / rec["aut"] for rec in self.fields], ZZ(0))
 
     @lazy_attribute
-    def mass(self):
-        p, e0, f, alpha, beta = self.p, self.e0, self.f_absolute, len(self.solid_green), len(self.blue)
-        q = p**f
-        return (q-1)**alpha * q**beta / (self.f * self.base_aut)
-
-    @lazy_attribute
     def mass_found(self):
-        return float(self.mass_stored / self.mass)
+        return float(self.mass_stored / self.mass_absolute)
 
     @lazy_attribute
-    def mass_display(self):
-        return self.mass
+    def mass_relative(self):
+        p, e0, f = self.p, self.e0, self.f_absolute
+        alpha = len([dot for dot in self.dots if dot[0] == "a"])
+        beta = len([dot for dot in self.dots if dot[0] == "b"])
+        q = p**f
+        return (q-1)**alpha * q**beta
+
+    @lazy_attribute
+    def mass_absolute(self):
+        return self.mass_relative / (self.f * self.base_aut)
+
+    @lazy_attribute
+    def mass_absolute_display(self):
+        return self.mass_absolute
+
+    @lazy_attribute
+    def mass_relative_display(self):
+        return self.mass_relative
+
         #m = self.mass
         #if m.denominator() == 1:
         #    return m
@@ -835,11 +804,13 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def ambiguity(self):
-        return self.p**self.gamma
+        p, f, etame, gamma = self.p, self.f, self.etame, self.gamma
+        q = p**f
+        return gcd(q-1, etame) * f * p**gamma
 
     @lazy_attribute
     def all_stored(self):
-        return "t" if self.mass == self.mass_stored else "f"
+        return "t" if self.mass_absolute == self.mass_stored else "f"
 
     def respoly_iter(self):
         assert self.n0 == 1
@@ -858,7 +829,7 @@ class pAdicSlopeFamily:
                             elif s[0] == "b":
                                 opts[v] = list(k)
                             else:
-                                raise ValueError("c found", self.tilts, rp)
+                                raise ValueError("c found", self.rams, rp)
             kz = k['z']
             D = {v: k(0) for v in Rp.gens()}
             for vec in cartesian_product([[(v, a) for a in opts[v]] for v in opts]):
@@ -899,7 +870,7 @@ class pAdicSlopeFamily:
                             elif s == "dinv":
                                 opts[v] = dinvs
                             else:
-                                raise ValueError("c found", self.tilts, rp)
+                                raise ValueError("c found", self.rams, rp)
             kz = k['z']
             D = {v: k(0) for v in Rp.gens()}
             for vec in cartesian_product([[(v, a) for a in opts[v]] for v in opts]):
@@ -1060,7 +1031,7 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def packet_count(self):
-        if self.mass != self.mass_stored or any("packet" not in rec for rec in self.fields):
+        if self.mass_absolute != self.mass_stored or any("packet" not in rec for rec in self.fields):
             return r"\N"
         return len(set(rec["packet"] for rec in self.fields))
 
@@ -1090,15 +1061,15 @@ class pAdicSlopeFamily:
             e = n // f
             w, etame = e.val_unit(p)
             if n0 == 1:
-                base_data = {"aut": 1, "visible": [], "rf": [1,0], "tilts": [], "label": f"{p}.1.0.1"}
+                base_data = {"aut": 1, "visible": [], "rf": [1,0], "rams": [], "label": f"{p}.1.0.1"}
             else:
                 base_data = field_data[base]
                 if base_data["visible"]:
                     w0, e0tame = e0.val_unit(p)
                     base_slopes = [s - 1 for s in base_data["visible"]]
-                    base_data["tilts"] = heights_to_tilts(slopes_to_heights(base_slopes, p, e0tame), p)
+                    base_data["rams"] = heights_to_rams(slopes_to_heights(base_slopes, p, e0tame), p)
                 else:
-                    base_data["tilts"] = []
+                    base_data["rams"] = []
 
             def R(e, rho):
                 #den = sum(p**j for j in range(rho))
@@ -1114,7 +1085,7 @@ class pAdicSlopeFamily:
             # We can't compute the label intrinsically, so we have to collect and sort
             fams = []
             if w == 0:
-                fams.append(cls(base, f, etame, base_data=base_data, tilts=[], field_cache=field_cache))
+                fams.append(cls(base, f, etame, base_data=base_data, rams=[], field_cache=field_cache))
             else:
                 for mvec in reversed(OrderedPartitions(w)):
                     Mvec = [0]
@@ -1126,8 +1097,8 @@ class pAdicSlopeFamily:
                             rmvec = []
                             for r, m in zip(rvec, mvec):
                                 rmvec.extend([r] * m)
-                            fams.append(cls(base, f, etame, base_data=base_data, tilts=rmvec, field_cache=field_cache))
-                fams.sort(key=lambda fam: (fam.c, len(fam.slope_multiplicities), list(reversed(fam.slope_multiplicities)), fam.tilts))
+                            fams.append(cls(base, f, etame, base_data=base_data, rams=rmvec, field_cache=field_cache))
+                fams.sort(key=lambda fam: (fam.c, len(fam.slope_multiplicities), list(reversed(fam.slope_multiplicities)), fam.rams))
             ctr = Counter()
             for fam in fams:
                 fam.ctr = ctr[fam.c]
