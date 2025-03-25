@@ -331,64 +331,44 @@ along with the Eisenstein polynomials that yield th distinguished representative
           vertices := Reverse(LowerVertices(rp));
           A := ResidualPolynomial(phi);
           g := 0;
-          for l in [1..#slopes] do
-            n := Degree(A[l]);
-            m := slopes[l];
+          Delta := 1;
+          x_base := [0];
+          for i in [1..#slopes] do
+            n := Degree(A[i]);
+            m := slopes[i];
             t := Numerator(m);
             d := Denominator(m);
             g := g+(d-t)*n;
-            s_diff := 1;
-            s_base := [0];
-            for k:=n to 0 by -1 do
-              Alk := Coefficient(A[l],k);
-              vprintf Monge, 4: "ResidualPolynomialDistinguished: slope %o, %o-th monomial %o\n",slopes[l],k,Alk;
-              if Alk ne 0 then
-                alk := Log(Alk) mod (q-1);
-                gtk := (g+(t-d)*k) mod (q-1);
-                if gtk ne 0 then 
-                  c := Gcd(gtk,q-1);
-                  new_s_diff := Lcm(s_diff,(q-1) div c);
+            for j := n to 0 by -1 do
+              Aij := Coefficient(A[i],j);
+              vprintf Monge, 4: "ResidualPolynomialDistinguished: slope %o, %o-th monomial %o\n",slopes[i],j,Aij;
+              if Aij ne 0 then
+                a := Log(Aij) mod (q-1);
+                D := (Delta*((t-d)*j+g)) mod (q-1);
+                if D ne 0 then 
+                  b,s,_ := Xgcd(D,q-1);
+                  new_Delta := Lcm(Delta,(q-1) div b);
                   minexp := q;
-                  for sb in s_base do
-                    if sb eq 0 then
-                      cc, s0, h := Xgcd(gtk*s_diff,q-1);
-                      i := (-(alk div cc)) mod (q-1);
-                      r := alk mod cc;
-                      s := (i*s0) mod (q-1);
-" ",l,"- th poly",k,"-th coeff log was",alk,"now is",r,"with s0 =",s;
-                    if r lt minexp then
-                      minexp := r;
-                      new_s_base := [s];
-                    elif r eq minexp then
-                      Append(~new_s_base,s);
-//"0 new_s_base",new_s_base;
-                    end if;
-                  else
-                    s := sb;
-                    vprintf Monge, 2: "ResidualPolynomialDistinguished:    solutions %o + n*%o\n",s,s_diff;  
-                    while s lt new_s_diff do
-                      thisexp := (alk + s*gtk) mod (q-1);
-                      if thisexp lt minexp then
-" ",l,"- th poly",k,"-th coeff log was",alk,"now is",thisexp,"with s =",s,"started with",sb;
-                        minexp := thisexp;
-//new_s := s;
-                        new_s_base := [s];
-                      elif thisexp eq minexp then
-                        Append(~new_s_base,s);
-//"new_s_base",new_s_base;           
+                  for xij in x_base do
+                      J := a+xij*((t-d)*j+g);                    
+                      r := J mod b;
+                      k := J div b;
+                      x := (xij-k*s*Delta) mod (q-1);
+                      vprintf Monge, 2: "ResidualPolynomialDistinguished:    solutions %o + n*%o\n",x,Delta;  
+                      if r lt minexp then
+                        minexp := r;
+                        new_x_base := [x];
+                      elif r eq minexp then
+                        Append(~new_x_base,x);
                       end if;
-                      s := s+s_diff;
-                    end while;
-end if;
                   end for;
-//if not new_s eq ss then error "new fast s failed with",phi; end if;
-                  s_diff := new_s_diff;
-                  s_base := new_s_base;
+                  Delta := new_Delta;
+                  x_base := new_x_base;
                 end if;
               end if; 
             end for;
           end for;
-          return s_base, s_diff;
+          return x_base, Delta;
        end function;
 
        function residual_polynomial_phis(s_base,s_diff)
@@ -404,6 +384,7 @@ end if;
             end while; 
           end for;
           vprintf Monge, 4: "ResidualPolynomialDistinguished:    #phis = %o\n",#minphis;  
+//"ResidualPolynomialDistinguished:", [phi[1]:phi in minphis];
           return minphis;
        end function;
 
@@ -416,10 +397,12 @@ end if;
          As := [];
          gaut, maut := AutomorphismGroup(K);
          aut := [ maut(tau) : tau in gaut ];
+//"#aut",#aut;
          for tau in aut do
-           vprintf Monge,1: "ResidualPolynomialClasses: %o |-> %o\n",KtoFq(K.1),KtoFq(tau(K.1));
+           vprintf Monge,1: "ResidualPolynomialDistinguished: %o |-> %o\n",KtoFq(K.1),KtoFq(tau(K.1));
            tauphi := Kx![tau(c): c in Coefficients(phi)]; 
            base, delta := residual_polynomial_distinguished_sub(tauphi);
+//"base",base,"delta",delta;
            As cat:= residual_polynomial_phis(base,delta);
          end for;           
          Sort(~As,func<x,y|ResidualPolynomialCompare(x[1],y[1])>);
@@ -899,6 +882,7 @@ intrinsic RamificationPolyAbs(phi::RngUPolElt) -> .
 end intrinsic;
 
 function pol_red_padic_sub(Phi,nu,alpha,psi01)
+//"pol_red_padic",psi01;
 // Phi in K[x]
 // nu in K[x] generates unramified subextension of L = K[x]/(Phi) = K(alpha)  
 // Phi(alpha) = 0
@@ -1011,7 +995,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
 
         // other levels
         for m in [2..easystart] do
-           vprintf Monge,2:"PolRedPadic: reduction with alpha -> alpha + theta * nu(alpha)^%o",m;
+           vprintf Monge,2:"PolRedPadic: reduction with alpha -> alpha + theta * nu(alpha)^%o\n",m;
            new_M := {};
            for phiandbeta in M do
               phi := phiandbeta[1]; beta := phiandbeta[2];
@@ -1078,6 +1062,70 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
 
 end function;
 
+intrinsic PolRedPadicTame(phi::RngUPolElt) -> .
+{}
+  K := CoefficientRing(phi);
+  p := Prime(K);
+  psi := DefiningPolynomial(K);
+  e0 := Degree(phi);
+  if (e0 mod p) eq 0 then
+    error "PolRedPadicTame: ";
+  end if;
+  Kx<x> := PolynomialRing(K);
+  pi := UniformizingElement(K);
+  U, KtoU := ResidueClassField(K);
+  xi := PrimitiveElement(U);
+  phi0 := ConstantCoefficient(phi);
+  phi01 := KtoU(phi0 div pi);
+  l := Log(phi01);
+//"l",l;
+  b := Gcd(e0,#U-1);
+  r := l mod b;
+//"r",r;
+  return x^e0+pi*K!(xi^r);
+end intrinsic;
+
+intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true) -> .
+{}
+  K := CoefficientRing(Phi);
+  Kx<x> := PolynomialRing(K);
+  L := Parent(alpha);
+  pi := UniformizingElement(K);
+  p := Prime(L);
+  phi := DefiningPolynomial(L);
+  Lur<a> := CoefficientRing(phi);
+  Lurx<x> := PolynomialRing(Lur);
+//"phi",phi;
+  e0 := Degree(phi);
+
+  gaut, maut := AutomorphismGroup(Lur);
+//"gaut",gaut,"maut",maut;
+  aut := [ maut(tau) : tau in gaut ];
+//"aut",aut;
+  M := {};
+  for tau in aut do
+     vprintf Monge,1: "PolRedPadic: %o |-> %o\n",Lur.1,tau(Lur.1);
+//"tau",tau;
+//"Kx",Kx;
+//"phi",phi,Coefficients(phi);
+//"for"; for c in Coefficients(phi) do "----";c; Parent(c); tau(c); Parent(tau(c)); end for;
+     tauphi := Lurx![tau(c): c in Coefficients(phi)];
+     psi := PolRedPadicTame(tauphi);
+     U, LurtoU := ResidueClassField(Lur);
+     psi0 := ConstantCoefficient(psi);
+     psi01 := LurtoU(psi0 div pi);
+     psi01coeffs := Eltseq(psi01);
+     Psi01 := Kx!psi01coeffs;
+     Psi := Kx!nu^e0+Psi01*p;
+     Include(~M,Psi);
+  end for;
+  if distinguished then
+    return Distinguished(M:nu:=nu);
+  else
+    return M;
+  end if;
+end intrinsic;
+
 
 intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true) -> .
         {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
@@ -1099,10 +1147,12 @@ return all Monge reductions of Phi}
   A, psis := ResidualPolynomialDistinguished(psi:conjugates := true);
   vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
   M := {};
+//"#psi",#psis;
   for psi in psis do
     tauL := TotallyRamifiedExtension(U,psi);
     thisphi, nu, thisalpha := EisensteinForm(tauL);
     psi01 := Coefficient(psi,0) div p;
+//"psi01",psi01;
     M join:= pol_red_padic_sub(thisphi,Zpx!nu,thisalpha,psi01);
   end for;
   if distinguished then
@@ -1115,16 +1165,27 @@ end intrinsic;
 intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
 {If Phi in K[x] is Eisenstein return the Monge reduction of Phi, where K/Qp is finite.
  If Phi in Zp[x] of Eisenstein Form return the generalized Monge reduction of Phi.}
+    K := CoefficientRing(Phi);
+    p := Prime(K);
     if IsEisenstein(Phi) then
-      M := MongeReduced(Phi); 
-      return M;
+      if Degree(Phi) mod p ne 0 then
+        M := PolRedPadicTame(Phi);
+      else
+        M := MongeReduced(Phi); 
+      end if;
     else
       vprintf Monge,2:"PolRedPadic: converting to Eisenstein form\n";
       phi, nu, alpha := EisensteinForm(Phi);
       vprintf Monge,2:"PolRedPadic: ramification index is %o and inertia degree is %o\n",Degree(phi)/Degree(nu),Degree(nu);
-      M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
-      return M;
+      L := Parent(alpha);
+      psi := DefiningPolynomial(L);
+      if Degree(psi) mod p ne 0 then
+        M := PolRedPadicTame(Phi,nu,alpha:distinguished:=distinguished);
+      else
+        M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
+      end if;
     end if;
+    return M;
 end intrinsic;
 
 intrinsic PolRedPadic(f::RngUPolElt,p::RngIntElt:prec:=32,distinguished:=true) -> .
