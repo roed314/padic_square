@@ -1,15 +1,14 @@
+# To be done before imminent pull request
 
-## Questions
-
- * Do we want to change how we display Swan vs Artin slopes?
- * What pictures do we want on the family page?
+ * Change ramification polygon for family page back to tame=slope 0
+ * For families of large degree, labels on Eisenstein diagram [overlap](https://olive.lmfdb.xyz/padicField/family/2.1.44.130a)
+ * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
+   * 
+   * 
+ * Add a version of Figure 2.2 from our paper to the family page
+ * Add tabs and a toggle between the three pictures for a family
  * Which version of ramification polygon?
-* I liked Figure 2.2 in last version.  New table 1.1 is nice.  I like new version of family photo (3.1) but we should talk about symbols and colors.
-
-## LMFDB front end
-
- * Change ramification polygon for family back to tame=slope 0
- * Change "Unramified/totally ramified tower" to "Canonical tower"
+ * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields
  * Write lots of knowls
    * the picture
    * the generic defining polynomial
@@ -17,42 +16,36 @@
    * the (scaled) rams for a family
    * the (scaled) heights for a family
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
+ * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
+ * Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes and label Artin vs Swan; need to add tame information to row headers and in the hidden slopes part of the Varying section.
 
- * Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We should add tame information to the hidden slopes (and remove the visible slopes from the row headers); ideally we could make sub-tables organized by the size of the Galois group.
- * Add ramification polygon and slope polygon to family page (maybe toggle with family photo?)
+
+# Issues for later
+
+## Front-end changes (most of these should be collected into Github issues)
  * Add the canonical subfields to search columns (on family page and field search results)
- * Make tame part have slope -1 in ramification polygon
  * Check that the new hidden column is correctly sorted, update hidden_slopes attribute in family.py to use it.
- * Add slope multiplicities column, make it possible to search.
- * Total only shows up in one subtable for the packet display, better border above/left of total row/col.
- * Pretty print the base field of a family
- * Table for varying (galois groups and hidden slopes)
- * Tabs for pictures
- * Search on: number of segments, slope multiplicity, slopes, heights, rams, mass, missing mass
- * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
- * Define nu in defining polynomial for family.
- * In family field, have columns for ai, bi, ci (better alignment, smaller)
+ * Improve the disply in the Varying section of a family homepage in cases where there are many different Galois groups and hidden slopes (see [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a) for an example).  This could take the form of making it a table of some sort, or adding information on degree, which is currently less apparent for Galois groups.
+ * Search for families (and maybe fields) based on: slope multiplicity, slopes, heights, rams.
+ * In the field search results on a family homepage, have columns for ai, bi, ci (better alignment, smaller)
  * After reloading data, fix mass and mass_stored display to use mixed fractions
- # Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
- * Add sort keys for family (including sort keys on base for relative families)
- * Change "mass missing" to "mass found"
- * Run PolRedPadic on the Find box
-
- * Fix __iter__ when base is not Qp.
- * Update grey bands to get darker with more overlap
+ * Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
+ * Add sort options for family searches (including sort keys on base for relative families)
+ * Run PolRedPadic on the Find box so that users can type in any polynomial and get the corresponding p-adic field (echoing functionality for number fields)
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
- * Would be nice to show actual automorphism group (commutator)
- * Add ability to compute families on the fly
- * Add more dynamic columns to dynamic stats, fix links (currently if you click on one of the entries [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family since visible isn't being unparsed correctly).
+ * It would be nice to show actual automorphism group rather than just its order
+ * Add ability to compute families on the fly (in larger degree for example)
+ * Add more dynamic columns to dynamic stats, fix links (currently if you click on the 32 entry [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family with c=26 since visible isn't being unparsed correctly).
 
 
 ## LMFDB data
 
- * Once we have a p-adic polredabs, compute the field labels for each polynomial in families and store in another table.
+ * Compute the field labels for each polynomial in families and store in another table.
  * add relative defining polynomials and relative Galois groups to the database (Galois group over the canonical subfields).
 
 ## Other code
 
+ * In family_generation.py, fix `__iter__` when base is not Qp.
  * Given a non-Galois K/Qp, write code to find the slope filtration on Gal(K/Qp) as a sequence of subgroups.  John suggested first finding the slopes (giving the sizes for the groups in the filtration), then trying to use resolvents to determine which options have the correct sized fixed field.
  * Given a non-Galois K/Qp, write code to find the canonical filtration by visible slopes Q_p < K_1 < K_2 < ... < K_j < K, where each extension K_j/K_{j-1} has a single slope associated to it, strictly increasing.  Hopefully this can run in moderate degree (e.g. 1000 over Q2), and may be easier than the general find-subfields problem.
 
@@ -70,7 +63,7 @@
  * Review our previous reports and pick up threads that we haven't been working on.
  * David Roberts mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
 
-## Done
+# Done
 
  * ~~Fix bug where variable numbering is repeated (e.g. [2-4.4_10_11_11](https://olive.lmfdb.xyz/padicField/family/2-4.4_10_11_11)).  Results from bands that have the same top, so the same red point.~~
  * ~~Fix bug where fractional heights lead to fractional variable subscripts (e.g. [2-6.6_12_13_13](https://olive.lmfdb.xyz/padicField/family/2-6.6_12_13_13))~~
@@ -106,3 +99,7 @@
  * ~~Once we have a p-adic polredabs, update the defining polynomials in lf_fields to use it, run in lf_families to get a collection of defining polynomials~~
  * ~~Write first paper~~
  * ~~Finish p-adic polredabs code~~
+ * ~~Update grey bands to get darker with more overlap~~
+ * ~~Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.~~
+ * ~~Change "mass missing" to "mass found"~~
+ * ~~Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We could make sub-tables organized by the size of the Galois group.~~
