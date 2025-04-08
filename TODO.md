@@ -14,7 +14,6 @@
  * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
-   * [lf.fields_in_family](https://olive.lmfdb.xyz/knowledge/edit/lf.fields_in_family) - Header for the Fields section of a family homepage, explaining what it means for a field to be part of the family, etc.
    * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
    * In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.
    * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
