@@ -2,14 +2,14 @@
 ## Questions
 
  * Do we want to change how we display Swan vs Artin slopes?
- * Should we replace the grid display on the front page with Counts search like in modular forms?
  * What pictures do we want on the family page?
  * Which version of ramification polygon?
 * I liked Figure 2.2 in last version.  New table 1.1 is nice.  I like new version of family photo (3.1) but we should talk about symbols and colors.
 
 ## LMFDB front end
 
- * Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We should add tame information to the hidden slopes (and remove the visible slopes from the row headers); ideally we could make sub-tables organized by the size of the Galois group.
+ * Change ramification polygon for family back to tame=slope 0
+ * Change "Unramified/totally ramified tower" to "Canonical tower"
  * Write lots of knowls
    * the picture
    * the generic defining polynomial
@@ -17,6 +17,8 @@
    * the (scaled) rams for a family
    * the (scaled) heights for a family
    * if we intend to systematically add both Serre-Swan and Artin slopes to other pages, various knowls will need to be updated/created.
+
+ * Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We should add tame information to the hidden slopes (and remove the visible slopes from the row headers); ideally we could make sub-tables organized by the size of the Galois group.
  * Add ramification polygon and slope polygon to family page (maybe toggle with family photo?)
  * Add the canonical subfields to search columns (on family page and field search results)
  * Make tame part have slope -1 in ramification polygon
@@ -28,7 +30,6 @@
  * Tabs for pictures
  * Search on: number of segments, slope multiplicity, slopes, heights, rams, mass, missing mass
  * Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.
- * Change "Unramified/totally ramified tower" to "Canonical tower"
  * Define nu in defining polynomial for family.
  * In family field, have columns for ai, bi, ci (better alignment, smaller)
  * After reloading data, fix mass and mass_stored display to use mixed fractions
@@ -47,14 +48,11 @@
 
 ## LMFDB data
 
- * Add more degree 16 extensions of Q2, presumably by finding more Galois splitting models
- * Once we have a p-adic polredabs, update the defining polynomials in lf_fields to use it, run in lf_families to get a collection of defining polynomials
  * Once we have a p-adic polredabs, compute the field labels for each polynomial in families and store in another table.
  * add relative defining polynomials and relative Galois groups to the database (Galois group over the canonical subfields).
 
 ## Other code
 
- * Finish p-adic polredabs code
  * Given a non-Galois K/Qp, write code to find the slope filtration on Gal(K/Qp) as a sequence of subgroups.  John suggested first finding the slopes (giving the sizes for the groups in the filtration), then trying to use resolvents to determine which options have the correct sized fixed field.
  * Given a non-Galois K/Qp, write code to find the canonical filtration by visible slopes Q_p < K_1 < K_2 < ... < K_j < K, where each extension K_j/K_{j-1} has a single slope associated to it, strictly increasing.  Hopefully this can run in moderate degree (e.g. 1000 over Q2), and may be easier than the general find-subfields problem.
 
@@ -65,12 +63,12 @@
 
 ## Paper
 
- * Write it!
+ * Write second paper
 
 ## Other
 
  * Review our previous reports and pick up threads that we haven't been working on.
- * David mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
+ * David Roberts mentioned work in number fields for finding Galois fields with root discriminant bounded by a specific value (around 45).  This is connected to the compositum game: trying to find different number fields with very similar ramification so that their compositum has small root discriminant.  For this, it would be helpful to be able to search based on the following partial order on number fields: For every prime we associate two numbers: the top wild slope s (which will be 1 for tame and 0 for unramified) and the lcm t of the tame degrees above that prime.  We say K <= L if s(K) <= s(L) and s(K) | s(L) for all primes p.  Given a number field L we want to find all other K in the database that are less than or equal to L.
 
 ## Done
 
@@ -103,3 +101,8 @@
  * ~~Update data to divide rams by p-1~~
  * ~~"Abs. Artin slopes" rather than "visible slopes" in search columns~~
  * ~~Talk about what to do with hollow green squares: they are the only things that do not correspond to coefficients in the generic polynomial.~~
+ * ~~Should we replace the grid display on the front page with Counts search like in modular forms?~~ No, but we link to such a search.
+ * ~~Add more degree 16 extensions of Q2, presumably by finding more Galois splitting models~~
+ * ~~Once we have a p-adic polredabs, update the defining polynomials in lf_fields to use it, run in lf_families to get a collection of defining polynomials~~
+ * ~~Write first paper~~
+ * ~~Finish p-adic polredabs code~~
