@@ -10,7 +10,6 @@
    * Update row label for packets from "slopes" to "hidden Artin slopes".
  * Add a version of Figure 2.2 from our paper to the family page
  * Add tabs and a toggle between the three pictures for a family
- * Which version of ramification polygon?
  * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
