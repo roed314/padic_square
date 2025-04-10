@@ -1,14 +1,11 @@
 # To be done before imminent pull request
 
  * Change ramification polygon for family page back to tame=slope 0 (DLR)
- * For families of large degree, labels on Eisenstein diagram [overlap](https://olive.lmfdb.xyz/padicField/family/2.1.44.130a) (DLR)
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
    * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ)
    * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
    * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (JJ)
    * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ)
-   * Update row label for packets from "slopes" to "hidden Artin slopes". (I think this was done)
- * Add a version of Figure 2.2 from our paper to the family page (DLR)
  * Add tabs and a toggle between the three pictures for a family (DLR)
  * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields  (JJ - I will change wording to canonical tower, would have to think about how to present canonical subfields)
  * Work on knowls
@@ -18,9 +15,13 @@
    * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
    * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
  * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
- * Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes and label Artin vs Swan; need to add tame information to row headers and in the hidden slopes part of the Varying section. (DLR)
  * Update other parts of the LMFDB (notably the number field pages) to use new labels (JJ)
  * In the "Fields" section of relative families, many of the column headers need to be updated to clarify that they are absolute invariants, not relative. (DLR)
+ * Need to add tame information to row headers in the packet section, in the hidden slopes part of the Varying section and in search results. (DLR)
+ * Convert `a/b` to `\frac{a}{b}` everywhere, aligned with our discussion in the paper. (DLR)
+ * Why does 2.1.44.76f have no relative constituents?
+ * Label overlap in Herbrand plot (2.1.32.140z) (DLR)
+ * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
 
 # Issues for later
 
@@ -105,3 +106,8 @@
  * ~~Replace "Num. poly" with "Ambiguity," which is the ratio of Num poly by the mass.  It will be a divisor of the degree, and an upper bound for the number of automorphisms for any field in the family.  Equal to p^(num red dots) * f (include base_aut?).  Be able to search on it.~~
  * ~~Change "mass missing" to "mass found"~~
  * ~~Port the 2-d dynamic stats table to the family page itself so you don't have to go to another page; deal with large tables better (like [2.2.2_5_7_9](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=16&visible_quantifier=exactly&visible=[2,+7%2F2,+9%2F2,+11%2F2]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none).  We could make sub-tables organized by the size of the Galois group.~~
+ * ~~For families of large degree, labels on Eisenstein diagram [overlap](https://olive.lmfdb.xyz/padicField/family/2.1.44.130a)~~
+ * ~~Add a version of Figure 2.2 from our paper to the family page~~
+ * ~~Add Underlying data links~~
+ * ~~Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes~~
+ 
