@@ -17,6 +17,7 @@
    * In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.
    * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
    * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
+   * Knowl for lf.tilts only talks about rams
  * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
  * Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes and label Artin vs Swan; need to add tame information to row headers and in the hidden slopes part of the Varying section. (DLR)
  * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
