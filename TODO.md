@@ -19,7 +19,7 @@
    * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
  * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
  * Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes and label Artin vs Swan; need to add tame information to row headers and in the hidden slopes part of the Varying section. (DLR)
- * Update other parts of the LMFDB (notably the number field pages) to use new labels (JJ)
+ * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
  * In the "Fields" section of relative families, many of the column headers need to be updated to clarify that they are absolute invariants, not relative. (DLR)
 
 # Issues for later
