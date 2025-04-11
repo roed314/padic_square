@@ -5,7 +5,7 @@
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
    * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ)
    * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
-   * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (JJ)
+   * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (now called top Artin slope in the knowl, and it refers to a knowl defining Artin slopes)
    * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ)
    * Update row label for packets from "slopes" to "hidden Artin slopes". (I think this was done)
  * Add a version of Figure 2.2 from our paper to the family page (DLR)
