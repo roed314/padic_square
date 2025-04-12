@@ -230,7 +230,7 @@ def relative_basepairs():
     basepairs = []
     for rec in db.lf_fields.search({"n": {"$gt": 1, "$lt": 16}}, ["new_label", "n", "p", "e"]):
         p, n, e = ZZ(rec["p"]), ZZ(rec["n"]), ZZ(rec["e"])
-        for m in srange(2, 48//n):
+        for m in srange(2, 47//n + 1):
             # We used to only support extensions where the base was part of the canonical filtration of the absolute field.
             #if e == 1 or m.is_power_of(p):
             # If the base is not unramified, we can only support totally wildly ramified degrees

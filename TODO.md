@@ -1,27 +1,25 @@
 # To be done before imminent pull request
 
- * Change ramification polygon for family page back to tame=slope 0 (DLR)
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
    * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ)
    * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
    * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (JJ)
    * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ)
- * Add tabs and a toggle between the three pictures for a family (DLR)
- * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields  (JJ - I will change wording to canonical tower, would have to think about how to present canonical subfields)
+ * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields.  Also add links to field pages for fields in the tower.  (JJ - I will change wording to canonical tower, would have to think about how to present canonical subfields)
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
    * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
    * In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.
    * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
    * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
- * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
- * Update other parts of the LMFDB (notably the number field pages) to use new labels (JJ)
- * In the "Fields" section of relative families, many of the column headers need to be updated to clarify that they are absolute invariants, not relative. (DLR)
- * Need to add tame information to row headers in the packet section, in the hidden slopes part of the Varying section and in search results. (DLR)
- * Convert `a/b` to `\frac{a}{b}` everywhere, aligned with our discussion in the paper. (DLR)
- * Why does 2.1.44.76f have no relative constituents?
- * Label overlap in Herbrand plot (2.1.32.140z) (DLR)
+   * Update completeness, reliability, and label knowls.
+   * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
+ * Update other parts of the LMFDB (notably the number field pages) to use new labels.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works (this is the link to "number fields with this as the completion) (JJ)
+ * Switch ramification polygon style to Santi's (DLR)
+ * For 2.1.4.6a2.1, the Galois splitting model doesn't link to the number field page since it's not in polredabs form
+ * In other parts of the LMFDB we use powers to indicate multiplicity, but in subfields we use x2.
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
+ * Review knowls (DLR)
 
 # Issues for later
 
@@ -35,10 +33,12 @@
  * Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
  * Add sort options for family searches (including sort keys on base for relative families)
  * Run PolRedPadic on the Find box so that users can type in any polynomial and get the corresponding p-adic field (echoing functionality for number fields)
- * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.
+ * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.  Should also name two important families of wildly ramified extensions: pth power roots of unity (subsumed by general cyclotomic fields), and pth power roots of any element in the tame subfield.
  * It would be nice to show actual automorphism group rather than just its order
  * Add ability to compute families on the fly (in larger degree for example)
  * Add more dynamic columns to dynamic stats, fix links (currently if you click on the 32 entry [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family with c=26 since visible isn't being unparsed correctly).
+ * Add a toggle to display defining polynomial of a field in Eisenstein form vs just as powers of x (analogous to homogenize/simplify for elliptic curves)
+ * Commands for Sage/Magma
 
 
 ## LMFDB data
@@ -110,4 +110,10 @@
  * ~~Add a version of Figure 2.2 from our paper to the family page~~
  * ~~Add Underlying data links~~
  * ~~Total only shows up some subtables for the packet display (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.1.16.71a); add better border above/left of total row/col; make it clearer how subtables are defined; make row headers be hidden slopes rather than all slopes~~
- 
+ * ~~In the "Fields" section of relative families, many of the column headers need to be updated to clarify that they are absolute invariants, not relative.~~
+ * ~~Need to add tame information to row headers in the packet section, in the hidden slopes part of the Varying section and in search results.~~
+ * ~~Convert `a/b` to `\frac{a}{b}` everywhere, aligned with our discussion in the paper.~~
+ * ~~Label overlap in Herbrand plot (2.1.32.140z)~~
+ * ~~Change ramification polygon for family page back to tame=slope 0~~
+ * ~~Why does 2.1.44.76f have no relative constituents?~~
+ * ~~Add tabs and a toggle between the three pictures for a family~~
