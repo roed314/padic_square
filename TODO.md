@@ -1,11 +1,11 @@
 # To be done before imminent pull request
 
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
-   * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ)
-   * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
+   * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ - done)
+   * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default.
    * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (now called top Artin slope in the knowl, and it refers to a knowl defining Artin slopes)
-   * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ)
- * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields.  Also add links to field pages for fields in the tower.  (JJ - I will change wording to canonical tower, would have to think about how to present canonical subfields)
+   * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ - done)
+ * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields.  Also add links to field pages for fields in the tower.  (JJ - I  changed wording to canonical tower, would have to think about how to present canonical subfields)
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
    * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
