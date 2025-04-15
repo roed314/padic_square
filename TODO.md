@@ -18,7 +18,7 @@
  * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
  * Update other parts of the LMFDB (notably the number field pages) to use new labels.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works (this is the link to "number fields with this as the completion) (JJ)
  * Switch ramification polygon style to Santi's (DLR)
- * For 2.1.4.6a2.1, the Galois splitting model doesn't link to the number field page since it's not in polredabs form
+ * For 2.1.4.6a2.1, the Galois splitting model doesn't link to the number field page since it's not in polredabs form (JJ - done)
  * In other parts of the LMFDB we use powers to indicate multiplicity, but in subfields we use x2.
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
  * Review knowls (DLR)
