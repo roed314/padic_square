@@ -15,6 +15,7 @@
  * Switch ramification polygon style to Santi's (DLR)
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
  * Review knowls (DLR)
+ * Tiny fix: On family page, when jump set is empty use "[\ ]" instead of "[]"
 
 # Issues for later
 
