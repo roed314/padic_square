@@ -1,25 +1,18 @@
 # To be done before imminent pull request
 
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
-   * Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.  (JJ)
-   * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
-   * Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (now called top Artin slope in the knowl, and it refers to a knowl defining Artin slopes)
-   * Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.  (JJ)
- * On a field homepage, change "Unramified/totally ramified tower" to "Canonical tower", add the canonical subfields.  Also add links to field pages for fields in the tower.  (JJ - I will change wording to canonical tower, would have to think about how to present canonical subfields)
+   * In "Fields" section of family homepage, add "Hidden Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
    * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
    * In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.
    * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
    * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
-   * Knowl for lf.tilts only talks about rams
    * Update completeness, reliability, and label knowls.
    * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
  * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
  * Update other parts of the LMFDB (notably the number field pages) to use new labels.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works (this is the link to "number fields with this as the completion) (JJ)
  * Switch ramification polygon style to Santi's (DLR)
- * For 2.1.4.6a2.1, the Galois splitting model doesn't link to the number field page since it's not in polredabs form
- * In other parts of the LMFDB we use powers to indicate multiplicity, but in subfields we use x2.
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
  * Review knowls (DLR)
 
@@ -41,6 +34,7 @@
  * Add more dynamic columns to dynamic stats, fix links (currently if you click on the 32 entry [here](https://olive.lmfdb.xyz/padicField/dynamic_stats?p=2&n=8&visible_quantifier=exactly&visible=[2,+3,+17%2F4]&col1=slopes&totals1=yes&col2=galois_label&totals2=yes&proportions=none) it also includes fields from another family with c=26 since visible isn't being unparsed correctly).
  * Add a toggle to display defining polynomial of a field in Eisenstein form vs just as powers of x (analogous to homogenize/simplify for elliptic curves)
  * Commands for Sage/Magma
+ * On a field homepage, add the other canonical subfields and links to field pages for fields in the tower.
 
 
 ## LMFDB data
@@ -119,3 +113,8 @@
  * ~~Change ramification polygon for family page back to tame=slope 0~~
  * ~~Why does 2.1.44.76f have no relative constituents?~~
  * ~~Add tabs and a toggle between the three pictures for a family~~
+ * ~~For 2.1.4.6a2.1, the Galois splitting model doesn't link to the number field page since it's not in polredabs form~~
+ * ~~Add "Visible Swan slopes" and "Swan slope content" columns to field search results, hidden by default.~~
+ * ~~Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (now called top Artin slope in the knowl, and it refers to a knowl defining Artin slopes)~~
+ * ~~Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.~~
+ * ~~Knowl for lf.tilts only talks about rams~~
