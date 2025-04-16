@@ -1,7 +1,7 @@
 # To be done before imminent pull request
 
  * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
-   * In "Fields" section of family homepage, add "Hidden Swan slopes" and "Swan slope content" columns, hidden by default. (JJ)
+   * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default.
  * Work on knowls
    * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
    * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
