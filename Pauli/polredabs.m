@@ -1,26 +1,96 @@
 "Loading polredabs";
 
+
+///////////////////////////////////////////////////////////////
+// reduction of zp
+
 function discrete_log(a)
   return Log(a);
 end function;
 
+/* is pol irreducible and primitive? */
+function is_prim_pol(pol,p)
+  m := Degree(pol);
+  Fpz<z> := PolynomialRing(GF(p));
+  pol := Fpz!pol;
+  if not IsIrreducible(pol) then return false; end if;
+  xoo := p^m-1;
+  pps := [a[1]:a in Factorization(p^m-1)];
+  for j in [1..#pps] do
+    Fq<a> := ext<GF(p)|pol>;
+    if (a^(xoo div pps[j])) eq 1 then
+      return false;
+    end if;
+  end for;
+  return true;
+end function;
+
+
+intrinsic unram_pol_jr(m,p) -> .
+{}
+//function unram_pol_jr(m,p)
+  //Fpz<z> := PolynomialRing(GF(p));
+  Zx<x> := PolynomialRing(Integers());
+  pol := x^m;
+  done := false;
+  while not done do
+    j:=0; s:=1;
+    while Coefficient(pol,j) eq (p-1)*s do
+      pol -:= s*(p-1)*x^j;
+      s := -s;
+      j +:= 1;
+    end while;
+    pol +:= s*x^j;
+    if is_prim_pol(pol,p) then 
+      done := true; 
+    end if;
+  end while;
+  return pol;
+//end function;
+end intrinsic;
+
+
+function conway_or_jr_polynomial(K,n)
+  if K eq PrimeRing(K) then
+    p := Prime(K);
+    if ExistsConwayPolynomial(p,n) then 
+      return Polynomial(Integers(),ConwayPolynomial(p,n)); 
+    else 
+      return unram_pol_jr(n,p);
+    end if;
+  else
+    RK := ResidueClassField(K);
+    return Polynomial(K!IrreduciblePolynomial(RK,n));
+  end if;
+end function;
+
+function residue_factor(phi)
+// irreducible factor of phi over residue class field
+// 0 if phi is not a power of an irreducible polynomial over residue class field
+  K := CoefficientRing(phi);
+  RK, KtoRK := ResidueClassField(K);
+  Rphi := Polynomial(RK,phi);
+  if Rphi eq 0 then return 0; end if;
+  Rfact := Factorization(Rphi);
+  if #Rfact ne 1 then return 0; end if;
+  nu := Rfact[1][1];
+  return Polynomial(K,nu);
+end function;
+
+
+////////////////////////
+
 declare verbose Monge, 6;
 
-intrinsic IsEisensteinForm(phi::RngUPolElt[RngPad]:Conway:=false) -> .
+intrinsic IsEisensteinForm(phi::RngUPolElt[RngPad]) -> .
 {
 True, if phi is in Eisenstein form.  If Conway is true the irreducible factor of phi in GF(p) must be a Conway polynomial.
 }
   K := CoefficientRing(phi);
   if K ne PrimeRing(K) then return false; end if;
-  RK, KtoRK := ResidueClassField(K);
-  Rphi := Polynomial(RK,phi);
-  if Rphi eq 0 then return false; end if;
-  Rfact := Factorization(Rphi);
-  if #Rfact ne 1 then return false; end if;
-  nu := Rfact[1][1];
-  if K eq BaseRing(K) then
-    if not IsConway(ext<GF(Prime(K))|nu>) and Conway then return false; end if;
-  end if;
+  
+  nu := residue_factor(phi);
+  if nu eq 0 then return false; end if;
   if not IsMonic(nu) then return false; end if;
   nuexp := Expansion(phi,Polynomial(K,nu));
   if Min([Valuation(a):a in Coefficients(nuexp[1])]) ne 1 then return false; end if;
@@ -30,122 +100,69 @@ True, if phi is in Eisenstein form.  If Conway is true the irreducible factor of
   return true;
 end intrinsic;
 
-
-
-intrinsic EisensteinForm(L::RngPad) -> .
+intrinsic EisensteinForm(L::RngPad,K::RngPad) -> .
 {
   A generating polynomial phi in K[x] of L in Eisenstein form along with 
   the polynomial nu generating the unramified subextensions of L/K and gamma with phi(gamma) = 0.
 }
   vprintf Monge,3: "EisensteinForm of %o",L;
-  K := BaseRing(L);
-  if L eq PrimeRing(L) then
-    error "EisensteinForm: L must be an extension of a local field.";
-  end if;
-
-  if IsUnramified(L) then
-    return DefiningPolynomial(L), DefiningPolynomial(L), L.1;
-  end if;
-
-  if K eq PrimeRing(L) then
-    // L is totally ramified 
-    return DefiningPolynomial(L), (PolynomialRing(BaseRing(L))).1, L.1;
-  end if;
-
-  pi := UniformizingElement(L);
+//"EF L",L,"K",K;
   Lt<t> := PolynomialRing(L); 
-  nu := Polynomial(K,ConwayPolynomial(Prime(K),InertiaDegree(L,PrimeRing(L))));
-  gamma := Roots(Lt!nu-pi)[1][1];
-  phi := CharacteristicPolynomial(gamma,BaseRing(BaseRing(L)));
-  return phi, nu, gamma;
+  pi := UniformizingElement(L);
+
+  if InertiaDegree(L,K) eq Degree(L,K) then
+    nu := Polynomial(K,conway_or_jr_polynomial(PrimeRing(K),InertiaDegree(L,K)));
+    phi :=  DefiningPolynomial(L,K);
+    alpha := Roots(Lt!nu-pi:Max:=1)[1][1];
+    return nu, nu, alpha;
+  elif RamificationIndex(L,K) eq Degree(L,K) then
+//"ram";
+    // L is totally ramified over K
+    phi := DefiningPolynomial(L,K);
+//"phi",phi;
+    alpha := Roots(Lt!phi:Max:=1)[1][1];
+    return phi, PolynomialRing(K).1, alpha;
+  else
+    nu := Polynomial(K,conway_or_jr_polynomial(PrimeRing(K),InertiaDegree(L,K)));
+    gamma := Roots(Lt!nu-pi:Max:=1)[1][1];
+    phi := CharacteristicPolynomial(gamma,K);
+    return phi, nu, gamma;
+  end if;
 end intrinsic;
 
+intrinsic EisensteinForm(f::RngUPolElt[RngPad],K::RngPad) -> .
+{
+  Given f irreducible, return a polynomial g in Eisenstein form such that K[x]/(g) is isomorphic to 
+  the extension of generated by f.
+}
+  L := CoefficientRing(f);
+  RL := ResidueClassField(L);
+  f := ChangePrecision(f,Precision(L));
+
+  if not IsMonic(f) then error "EisensteinForm: polynomial",f,"is not monic"; end if;
+   
+  if IsEisenstein(f) then
+    L := TotallyRamifiedExtension(L,f);
+    return EisensteinForm(L,K);
+  elif 
+    IsIrreducible(Polynomial(RL,f)) then
+    U := UnramifiedExtension(L,f);
+    return EisensteinForm(U,K);
+  else  
+    factors, _ ,Ls := Factorization(f:Extensions:=true); 
+    if #factors gt 1 then error "EisensteinForm: polynomial is not irreducible"; end if;
+    return EisensteinForm(Ls[1]`Extension,K);
+  end if;
+end intrinsic;
 
 intrinsic EisensteinForm(f::RngUPolElt[RngPad]) -> .
 {
-  Given f in R[x] irreducible, return a polynomial g in Eisenstein form such that Zp[x]/(g) is isomorphic to 
-  the extension of Zp generated by f.
+  Given f in K[x] irreducible, return a polynomial g in Eisenstein form such that K[x]/(g) is isomorphic to 
+  the extension of K generated by f.
 }
-
-  if not IsMonic(f) then
-    error "EisensteinForm:",f,"is not monic";
-  end if;
-
-  Kx<x> := Parent(f);
+//"EF(f)";
   K := CoefficientRing(f);
-  p := Prime(K);
-  Zp := PrimeRing(K);
-  RK := ResidueClassField(K);
-  RKz<z> := PolynomialRing(RK);
-  vprintf Monge,3: "EisensteinForm of polynomial of degree %o over %o\n",Degree(f),K;
-
-  if IsEisenstein(f) then
-    vprintf Monge,3: "EisensteinForm: Eisenstein, ramified of degree %o\n",Degree(f); 
-    L<pi> := TotallyRamifiedExtension(K,f);
-    if BaseRing(L) eq Zp then
-      return f, x, pi;
-    elif InertiaDegree(K,Zp) eq Degree(K,Zp) then
-      Lt<t> := PolynomialRing(L);
-      U := BaseRing(L);
-      nu := DefiningPolynomial(U);
-      gamma := Roots(Lt!nu-pi)[1][1];
-      phi := CharacteristicPolynomial(gamma,BaseRing(BaseRing(L)));
-      return phi, nu, gamma;
-    else
-      return EisensteinForm(L);
-    end if;
-  end if; 
-  
-  if IsIrreducible(RKz!f) then
-    vprintf Monge,3: "EisensteinForm: unramified of degree %o\n",Degree(f); 
-    U := UnramifiedExtension(K,Degree(f));
-    Uy<y> := PolynomialRing(U);
-    alpha := Roots(Uy!f)[1][1];
-    return f, f, alpha;
-  end if;
-
-  if IsEisensteinForm(f:Conway:=true) then
-    vprintf Monge,3: "EisensteinForm: already in Eisenstein form\n"; 
-    RK, KtoRK := ResidueClassField(K);
-    Rf := Polynomial(RK,f);
-    Rfact := Factorization(Rf);
-    Rnu := Rfact[1][1];
-    vprintf Monge,3: "EisensteinForm: Eisenstein form with inertia degree %o and ramification index %o\n",Degree(Rnu),Degree(f)/Degree(Rnu);
-    if Degree(Rnu) eq 1 then
-      nu := Polynomial(K,Rnu);
-      phi := Evaluate(f,x-ConstantCoefficient(nu));
-      if not IsEisenstein(phi) then
-        error "failure";
-      end if;
-      return EisensteinForm(phi);
-    else
-      nu := Polynomial(Zp,Rnu);
-      U := UnramifiedExtension(K,nu);
-      Uy<y> := PolynomialRing(U);
-      _,_,Ls := Factorization(Uy!f:Extensions:=true); 
-      alpha := Roots(Polynomial(Ls[1]`Extension,f))[1][1];
-      return f, nu, alpha;
-    end if;
-  end if;
-
-  fact, const, cert := Factorization(f:Certificates:=true);
-  
-  if #fact gt 1 then
-    error "EisensteinForm: The polynomial is not irreducible:",f,"over",CoefficientRing(f);
-  end if;
-
-  F := cert[1]`F;
-  if F gt 1 then
-    U := UnramifiedExtension(K,F);
-    Uy<y> := PolynomialRing(U);
-    Ufact, const, Uext := Factorization(Uy!f:Extensions:=true);
-    L := Uext[1]`Extension;
-    return EisensteinForm(L);
-  else
-    fact, const, ext := Factorization(f:Extensions:=true);
-    L := ext[1]`Extension;
-    return EisensteinForm(L);
-  end if;  
+  return EisensteinForm(f,K);
 end intrinsic;
 
 intrinsic Distinguished(M::SetEnum[RngUPolElt[RngPad]]:nu:=0) -> .
@@ -157,7 +174,7 @@ intrinsic Distinguished(M::SetEnum[RngUPolElt[RngPad]]:nu:=0) -> .
   if IsEisenstein(Rep(M)) then
     nu := x;
   elif nu eq 0 then
-    _, nu, _ := EisensteinForm(Rep(M));
+    nu := residue_factor(Rep(M));
   end if;
 
   L := SetToSequence(M);
@@ -197,7 +214,7 @@ The residual polynomial of the segment of the ramfication polygon of phi of slop
           rp, rho := RamificationPolyAbs(phi,alpha);
           LX<X> := Parent(rho);
           L := CoefficientRing(LX);
-          nualpha := Evaluate(nu,alpha);
+          nualpha := Evaluate(LX!nu,alpha);
           RL, LtoRL := ResidueClassField(L);
           RLz<z> := PolynomialRing(RL);
           rhom := Evaluate(rho,nualpha^m*X);
@@ -346,7 +363,7 @@ end intrinsic;
 intrinsic ResidualPolynomialDistinguished(phi::RngUPolElt:conjugates:=false) -> .
 {
 The distinguished (minimal) representative of the residual polynomial class of an Eisenstein polynomial phi
-along with the Eisenstein polynomials that yield th distinguished representative.
+along with the Eisenstein polynomials that yield the distinguished representative.
 }
       if not IsEisenstein(phi) then
         conjugates := true;
@@ -358,7 +375,6 @@ along with the Eisenstein polynomials that yield th distinguished representative
       K := CoefficientRing(phi);
       piK := UniformizingElement(K);
       Kx<x> := PolynomialRing(K);
-//"prec phi",[Precision(a) : a in Coefficients(phi)];
       phi := ChangePrecision(phi,Precision(K));
       L<alpha> := TotallyRamifiedExtension(K,phi);
       rp, rho := RamificationPolyAbs(phi,alpha);
@@ -504,7 +520,7 @@ intrinsic String(f::RngUPolElt:nu:=0,wherenu:=false,Latex:=false) -> .
     nu := Parent(f).1;
     if wherenu then wherenu := false; Latex := true; end if;
   elif nu eq 0 then
-    _, nu, _ := EisensteinForm(f);
+    nu := residue_factor(f);
   end if;
  
   R := CoefficientRing(f);
@@ -567,15 +583,23 @@ intrinsic Expansion2(f::RngUPolElt,nu::RngUPolElt:limit:=0) -> .
 }
   if limit eq 0 then limit := Precision(CoefficientRing(f)); end if;
 //"f",f,"nu",nu;  
+  //Kx<x> := Parent(f);
+  //K := CoefficientRing(f);
+//"Expansion2","f",Parent(f),"nu",Parent(nu);
+
   Zx<x> := PolynomialRing(Integers()); 
+
   nuexp := Expansion(f,nu);
   p := Prime(CoefficientRing(f));
+  //pi := UniformizingElement(K);
 
-  if not IsEisenstein(f) then
+  if Degree(nu) gt 1 then
     expansion := [Zx!a : a in nuexp];
   else
     expansion := [Zx!Eltseq(ConstantCoefficient(a)): a in nuexp];
   end if;
+
+  //expansion := nuexp;
 
   expexp := [];
   
@@ -593,7 +617,9 @@ intrinsic Expansion2(f::RngUPolElt,nu::RngUPolElt:limit:=0) -> .
   maxlen := Maximum([#gel:gel in expexp] cat [limit]); 
   for i in [1..#expexp] do 
     expexp[i] := expexp[i] cat [0:k in [1..maxlen-#expexp[i]+1]];
-  end for; 
+  end for;
+//"expexp",Parent(expexp); 
+//"nuexp",Parent(nuexp); 
   return expexp, nuexp;
 end intrinsic;
 
@@ -615,7 +641,9 @@ where alpha is a root of phi.}
 
         L:=Parent(alpha);
         Lx<x> := PolynomialRing(L);
-        rho:=Evaluate(phi,x + alpha); 
+//"phi",Parent(phi);
+//"x+alpha",Parent(x+alpha);
+        rho:=Evaluate(Lx!phi,x + alpha); 
         ramification_polygon := NewtonPolygon(rho);
         return ramification_polygon,rho;
 end intrinsic;
@@ -627,41 +655,49 @@ intrinsic RamificationPolyAbs(phi::RngUPolElt) -> .
         return RamificationPolyAbs(phi,alpha);
 end intrinsic;
 
-function pol_red_padic_sub(Phi,nu,alpha,psi01)
+
+///////////////////////////////////////////////////////////////
+// function pol_red_padic_sub(Phi,nu,alpha,psi01)
+intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
+{}
 //"pol_red_padic psi01",psi01,"Parent(nu)",Parent(nu);
 // Phi in K[x]
 // nu in K[x] generates unramified subextension of L = K[x]/(Phi) = K(alpha)  
 // Phi(alpha) = 0
-// Phi01 desired constant coefficient mod pi^2
+// psi01 desired constant coefficient mod pi^2
 //"=======================================================";
 
         vprint Monge,5:"PolRedPadic: reduction of",String(Phi:nu:=nu);
         
         // these stay fixed
-
+//"Phi",Parent(Phi);
         n := Degree(Phi);
         f := Degree(nu);
         e := n div f;
         
-        Zpx<x> := Parent(Phi);
+        Kx<x> := Parent(Phi);
+        K := CoefficientRing(Kx);
 
-        Zp := CoefficientRing(Zpx);
-        p := Prime(Zp);
-        q := p^f;
-        Fp, ZptoFp := ResidueClassField(Zp);
-        Fps, FpstoFp := UnitGroup(Fp);
-        Fpz<z> := PolynomialRing(Fp);
+        p := Prime(K);
+        Zp := PrimeRing(K);
+        RK, KtoRK := ResidueClassField(K);
+        RKs, RKstoRK := UnitGroup(RK);
+        RKz<z> := PolynomialRing(RK);
 
         L := Parent(alpha);
+//"K sub L",K eq BaseRing(L);
+
         Lt<t> := PolynomialRing(L);
         RL, LtoRL := ResidueClassField(L);
         RLs, RLstoRL := UnitGroup(RL);
         psi01R := LtoRL(psi01);
         xi := RL.1; // primitive element
-        Pi := Evaluate(nu,alpha);        
+//"nu",nu,Parent(nu);
+//"alpha",alpha,Parent(alpha);
+        Pi := Evaluate(Polynomial(L,nu),alpha);        
        
         function is_iso(S)
-          FB := Basis(RL,Fp);  
+          FB := Basis(RL,RK);  
           FL := [Eltseq(Evaluate(S,b)):b in FB];
           FM := Matrix(FL);
           return Rank(FM) eq #FB; 
@@ -674,7 +710,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         
         slopes := LowerSlopes(rp); // slopes := slopes[2..#slopes]; // remove infinite slope
         vprintf Monge,2: "PolRedPadic: Ramification polygon %o with slopes %o\n", LowerVertices(rp), slopes;
-        intslopes := [Floor(s):s in slopes | Abs(s) lt Precision(Zp)];
+        intslopes := [Floor(s):s in slopes | Abs(s) lt Precision(PrimeRing(K))];
         
         max_m := Integers()!-Minimum(intslopes)+1;
         m := max_m;
@@ -690,7 +726,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         easystart := m+1; 
         easylimit := Wm[easystart] div e + 1;
         
-        vprint Monge,1:"PolRedPadic: easy reduction starts with m =",easystart,"; i.e. modulo p ^",easylimit;
+        vprint Monge,1:"PolRedPadic: easy reduction starts with m =",easystart,"; i.e. modulo pi ^",easylimit;
  
         function easyreduce(phi)
           m := easystart;
@@ -715,13 +751,17 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
 //"nuexp2",Expansion(newphi,nu);
           return newphi;
         end function;
-        
+       
         // reduction of constant coefficient mod pi^2
         vprint Monge,2:"PolRedPadic: reduction with alpha -> alpha + theta * nu(alpha)";
+//"nu",nu;
         nuexp2, nuexp := Expansion2(Phi,nu : limit := easylimit);
+//"nuexp",nuexp;
+//"nuexp2",nuexp2;
+//"nuexp2[1][2]",nuexp2[1][2];
         phi0 := nuexp[1];
-        phi0alpha := Evaluate(phi0,alpha); 
-        nualpha := Evaluate(nu,alpha);
+        phi0alpha := Evaluate(Lt!phi0,alpha); 
+        nualpha := Evaluate(Lt!nu,alpha);
         eta := LtoRL((nualpha^e) div p);
         S1, r1 := ResidualPolynomialOfComponentAbs(Phi,nu,alpha,1);
         S1eta := eta*S1;
@@ -730,6 +770,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         
         new_phis := {};
         Thetas := [r[1]:r in Roots(S1eta-(phi01-psi01R))];
+//"Thetas",Thetas;
         vprintf Monge,2:"PolRedPadic:   transforming phi*_(0,1) from %o to %o\n",phi01,psi01R;
         if Thetas eq [] then
           error "PolRedPadic: reduction step slope -1 failed";
@@ -737,10 +778,15 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         for theta in Thetas do
           vprintf Monge,2:"PolRedPadic:     transformation alpha -> alpha + (%o)*nu(alpha)\n",theta;
           new_beta := alpha+(L!theta)*nualpha; 
-          new_phi := CharacteristicPolynomial(new_beta,Zp);
+//"new_beta",Parent(new_beta);
+//"K",K;
+          new_phi := CharacteristicPolynomial(new_beta,K);
+//"new_phi",new_phi;
           Include(~new_phis,<new_phi,new_beta>);
-          vprint  Monge,2:"PolRedPadic:     now phi*_(0,1) =",Evaluate(Expansion2(new_phi,nu)[1][2],xi);
-          if not Evaluate(Expansion2(new_phi,nu)[1][2],xi) eq psi01R then
+          vprint  Monge,2:"PolRedPadic:     now phi*_(0,1) =",RL!Evaluate(Expansion2(new_phi,nu)[1][2],L!xi);
+//"psi01R",Evaluate(Expansion2(new_phi,nu)[1][2],xi),psi01R;
+//"eval","new_phi",Parent(new_phi),"xi",Parent(xi);
+          if not RL!Evaluate(Expansion2(new_phi,nu)[1][2],L!xi) eq psi01R then
              error "PolRedPadic: reduction step m=1 failed";
           end if;
         end for;
@@ -750,6 +796,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         for m in [2..easystart] do
            vprintf Monge,2:"PolRedPadic: m = %o, reduction with alpha -> alpha + theta * nu(alpha)^%o\n",m,m;
            new_M := {};
+//"M",M;
            for phiandbeta in M do
               phi := phiandbeta[1]; beta := phiandbeta[2];
               nuexp2, nuexp := Expansion2(phi,nu : limit := easylimit);
@@ -768,7 +815,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
               vprint Monge,2:"PolRedPadic:   improving phi*_(",i,",",k,") =",phisik;
               phisikbeta := LtoRL(Evaluate(phisik,beta));
               
-              FB := Basis(RL,Fp);
+              FB := Basis(RL,RK);
               FL := [Eltseq(Evaluate(eta^k*Sm,b)):b in FB];
               FM := Matrix(FL);
              
@@ -800,7 +847,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
               for theta in Thetas do
                 vprintf Monge,2:"PolRedPadic:     transformation alpha -> alpha + (%o)*nu(alpha)^%o\n",theta,m;
                 new_beta := beta+(L!theta)*nubeta^m;
-                new_phi := CharacteristicPolynomial(new_beta,Zp);
+                new_phi := CharacteristicPolynomial(new_beta,K);
                 Include(~new_phis,<new_phi,new_beta>);
                 vprint Monge,4:"PolRedPadic:     now phi*_(",i,",",k,") =",Expansion2(new_phi,nu)[i+1][k+1];
                 //vprintf Monge,5:"PolRedPadic:     phi(beta) = phi(%o) = %o\n",new_beta,Evaluate(new_phi,new_beta);
@@ -814,7 +861,8 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
 //"nuexp after easyreduce",[Expansion(a,nu): a in M];
         return M;
 
-end function;
+//end function;
+end intrinsic;
 
 intrinsic PolRedPadicTame(phi::RngUPolElt) -> .
 {}
@@ -873,27 +921,27 @@ intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=tr
   end if;
 end intrinsic;
 
-
-intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true) -> .
-        {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
-return all Monge reductions of Phi}
-  Zpx<x> := Parent(Phi); 
-  Zp := CoefficientRing(Phi);
-  L := Parent(alpha);
-  RL, LtoRL := ResidueClassField(L);
+intrinsic PolRedPadic(L::RngPad:distinguished:=true) -> .
+{Krasner-Monge reduced polynomial phi such that L = Zp[x]/(phi)}
   p := Prime(L);
   Lt<t> := PolynomialRing(L); 
-  U := BaseRing(L);
-  Uy<y> := PolynomialRing(U);  
+  Zp := PrimeRing(L);
+  Zpx<x> := PolynomialRing(Zp);
+  //U := BaseRing(L);
+  //Uy<y> := PolynomialRing(U);  
   pi := UniformizingElement(L);
-  psi := DefiningPolynomial(L);
+  f := InertiaDegree(L,PrimeRing(L));
+  nu := Zpx!conway_or_jr_polynomial(p,f);
   gamma := Roots(Lt!nu-pi)[1][1];
-  phi := CharacteristicPolynomial(gamma,BaseRing(U));
+// TODO
+  psi := DefiningPolynomial(L);
+  phi := CharacteristicPolynomial(gamma,Zp);
   n := Degree(phi);
   A, psis := ResidualPolynomialDistinguished(psi:conjugates := true);
   vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
   M := {};
   for psi in psis do
+//"PRP(L) EF";
     thisphi, nu, thisalpha := EisensteinForm(psi);
     psi01 := Coefficient(psi,0) div p;
     newphis := pol_red_padic_sub(thisphi,Zpx!nu,thisalpha,psi01);
@@ -907,25 +955,70 @@ return all Monge reductions of Phi}
   end if;
 end intrinsic;
 
-intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true,monge:=true) -> .
-{If Phi in K[x] is Eisenstein return the Monge reduction of Phi, where K/Qp is finite.
- If Phi in Zp[x] of Eisenstein Form return the generalized Monge reduction of Phi.}
-    K := CoefficientRing(Phi);
-    p := Prime(K);
-      vprintf Monge,2:"PolRedPadic: converting to Eisenstein form\n";
-      phi, nu, alpha := EisensteinForm(Phi);
-      vprintf Monge,2:"PolRedPadic: ramification index is %o and inertia degree is %o\n",Degree(phi)/Degree(nu),Degree(nu);
-      L := Parent(alpha);
-      psi := DefiningPolynomial(L);
-      if Degree(psi) mod p ne 0 then
-        M := PolRedPadicTame(Phi,nu,alpha:distinguished:=distinguished);
-      else
-        M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
-      end if;
-    return M;
+
+
+intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,relative:=false) -> .
+        {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
+return the Krasner- Monge reduction of Phi}
+  Kx<x> := Parent(Phi); 
+  K := CoefficientRing(Phi);
+
+  L := Parent(alpha);
+  Lt<t> := PolynomialRing(L); 
+
+  RL, LtoRL := ResidueClassField(L);
+  p := Prime(L);
+  U := BaseRing(L);
+  Uy<y> := PolynomialRing(U);  
+  pi := UniformizingElement(L);
+  psi := DefiningPolynomial(L);
+  gamma := Roots(Lt!nu-pi)[1][1];
+  phi := CharacteristicPolynomial(gamma,BaseRing(U));
+  n := Degree(phi);
+  A, psis := ResidualPolynomialDistinguished(psi:conjugates := true);
+  vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
+  M := {};
+  for psi in psis do
+//"PRP(P,n,a) EF";
+    thisphi, nu, thisalpha := EisensteinForm(psi,K);
+    psi01 := Coefficient(psi,0) div p;
+    newphis := pol_red_padic_sub(thisphi,Kx!nu,thisalpha,psi01);
+    M join:= newphis;
+  end for;
+  if distinguished then
+    PSI := Distinguished(M);
+    return PSI;
+  else
+    return M; 
+  end if;
 end intrinsic;
 
-intrinsic PolRedPadic(f::RngUPolElt,p::RngIntElt:prec:=300,distinguished:=true) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true) -> .
+{For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
+   p := Prime(K);
+   vprintf Monge,2:"PolRedPadic: converting to Eisenstein form\n";
+//"PRP(P,K) EF";
+//"Phi",Parent(Phi);
+//"K",K;
+   phi, nu, alpha := EisensteinForm(Phi,K);
+   vprintf Monge,2:"PolRedPadic: ramification index is %o and inertia degree is %o\n",Degree(phi)/Degree(nu),Degree(nu);
+   L := Parent(alpha);
+   // psi := DefiningPolynomial(L);
+   if RamificationIndex(L,K) mod p ne 0 then
+     M := PolRedPadicTame(Phi,nu,alpha:distinguished:=distinguished);
+   else
+//"phi",phi;
+     M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
+   end if;
+   return M;
+end intrinsic;
+
+intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
+{For Phi in OK irreducible return a Krasner-Monge reduced polynomial Psi such that K[x]/(Phi)=K[x]/(Psi).}
+  return PolRedPadic(Phi,CoefficientRing(Phi));
+end intrinsic;
+
+intrinsic PolRedPadic(f::RngUPolElt[RngInt],p::RngIntElt:prec:=300,distinguished:=true) -> .
 {
 The distinguished reduced generating polynomial of the extension generated by f over Zp. 
 }
@@ -936,8 +1029,315 @@ The distinguished reduced generating polynomial of the extension generated by f 
   Zp := pAdicRing(p,prec);
   ZpX<X> := PolynomialRing(Zp);
   Phi := ZpX!f;
-  Psi := PolRedPadic(Phi: distinguished:=distinguished);
+  Psi := PolRedPadic(Phi,Zp: distinguished:=distinguished);
   F := Polynomial(Integers(),Psi);
   return Psi;
 end intrinsic;
+
+
+///////////////////////////////////////////////////////////////
+// Monge Reduction
+
+intrinsic MongeReduced(f::RngUPolElt:distinguished:=true) -> .
+        {
+        Return the set of Monge-reduced polynomials that generate an extensions isomorphic to the extensions generated by the Eisenstein polynomial f.
+}
+/*        
+        EXAMPLES
+
+        We Monge-reduce a polynomial,.
+
+             R := pAdicRing(3,30); Rx<x> := PolynomialRing(R);
+             f := x^18+249*x^3+486*x+30;
+             M := MongeReduced(f);
+             M;
+
+        If the polynomial is Monge-reduced it does not change when reduced again::
+
+             g := Representative(M);
+             N := MongeReduced(g);
+             M  eq  N;
+
+        The Monge-reduction of a polynomial generating a tamely ramified extension::
+
+             f := x^20+249*x^3+486*x+30;
+             MongeReduced(f);
+
+        The Monge-reduction of a polynomial generating a tamely ramified extension of large degree::
+
+             f := x^90 + 249*x^81 + 486*x^18 + 30;
+             MongeReduced(f);
+
+        We use Monge reduction to verify that two polynomials generate isomorphic extensions
+
+             R := pAdicRing(5,200); 
+             Rx<x> := PolynomialRing(R);
+             f := x^25 + 15625*x^4 + 5;
+             g := x^25 + 5;
+             MongeReduced(f) eq MongeReduced(g);
+
+        Monge-reduction over an unramified extensions::
+
+             R<g> := UnramifiedExtension(pAdicRing(2,30),2); Rx<x> := PolynomialRing(R);
+             f := x^8 + 66*g*x^6 + 132*g*x + 258;
+             MongeReduced(f);
+
+        Monge reduction over a totally ramified extension::
+
+             R := pAdicRing(3,10); Rx<x> := PolynomialRing(R);
+             S<a> := ext<R|x^3+9*x+3>; Sy<y> := PolynomialRing(S);
+             f := y^6+6*y^2+a;
+             MongeReduced(f);
+
+        AUTHORS:
+
+        - Sebastian Pauli and Brian Sinclair (2017-07-20): initial Sage version
+        - Sebastian Pauli (2024): Magma version
+
+        REFERENCES:
+
+        [Mon14] M. Monge, "A family of Eisenstein polynomials
+          generating totally ramified extensions, identification of extensions and
+          construction of class fields." International Journal of Number Theory
+          (2014): 1-29.
+*/
+
+
+function ramification_poly(phi);
+            
+        K:=CoefficientRing(phi);
+        
+        n:=Degree(phi);
+        L:=ext<K|phi>;
+        alpha:=L.1;
+    
+        Lx<x>:=PolynomialRing(L);
+        rho:=Evaluate(phi,alpha*x + alpha) div (alpha^n); 
+        rho:=Lx!rho;
+        ChangePrecision(~rho,Precision(L));
+    
+        ramification_polygon := NewtonPolygon(rho);
+      
+        return ramification_polygon,rho;
+end function;
+
+function deformed_eisenstein(f, k, theta) 
+          if theta eq 0 then 
+            return f; 
+          end if; 
+          OKx<x> := Parent(f);
+
+          OK := CoefficientRing(OKx);  
+          L<alpha> := TotallyRamifiedExtension(OK,f);
+          df := CharacteristicPolynomial(alpha+theta*alpha^k);
+          return df;
+end function;
+
+
+
+
+        if not IsEisenstein(f) then
+            Error("only Eisenstein polynomials can be Monge-reduced");
+        end if;
+
+        vprint Monge,2:"Monge: reduction of",f;
+        n := Degree(f);
+        RT<x> := Parent(f);
+        R := CoefficientRing(RT);
+        p := Prime(R);
+        pi := UniformizingElement(R);
+        F, RtoF := ResidueClassField(R);
+        Fp := PrimeField(F);
+        FB := Basis(F,Fp);  
+        Fi := {a:a in F|IsInvertible(a)};
+        q := #F;
+        Fs, Fsm := UnitGroup(F);
+        xi := Fsm(Fs.1); // primitive element
+        xiR := R!xi;
+        Fz<z> := PolynomialRing(F);
+        r := F.1;
+
+//"##################";
+
+        function elt_coefficient(alpha,k)
+          w := 0;
+          while alpha ne R!0 do
+            v := Valuation(alpha);
+            w +:= v;
+            if w gt k then
+              return RtoF(0);
+            end if;
+            alpha := alpha/pi^v;
+            albha := RtoF(alpha);
+            // i := Index(rebs,albha);
+            if albha ne 0 then i := discrete_log(albha); rep := R!(xi^i);
+            else rep := R!0; end if;
+            if w eq k then
+              return albha;
+            else
+              //rep := reps[i];
+              //rep := R!(xi^i);
+              alpha := alpha-rep;
+            end if;
+          end while;
+          return RtoF(0);
+        end function;
+
+
+        //  reduction step 0 -- taking care of the constant coefficient
+        
+        phi0 := ConstantCoefficient(f);
+        phi01 := RtoF(phi0 div pi^1);
+        res, M := ResidualPolynomialDistinguished(f:conjugates);
+        rp, rho := ramification_poly(f);
+
+        function hasse_herbrand(m)
+          // Returns n times the (generalized) Hasse-Herbrand 
+          // function of the ramification polygon R of an extension 
+          // of degree n evaluated at m.
+          h := Minimum([pt[2]+m*pt[1] : pt in Vertices(rp)]);
+          return h;
+        end function;
+
+        function f_ij(f,m)
+            lev := hasse_herbrand(m)+n;
+            i := Integers()!lev  mod  n;
+            j := Integers()!lev  div  n;
+            fi := Coefficient(f,i);
+            fij := elt_coefficient(fi,j);
+            return fij, i, j;
+        end function;
+
+        J0 := Integers()!Vertices(rp)[1][2];
+        a := J0 div n;
+        b := J0 mod n;
+        krasner_bound := 1+Floor(1+2*a+(2*b/n));   // bound on coefficents 
+ 
+        function is_iso(S)
+          FB := Basis(F,Fp);  
+          FL := [Eltseq(Evaluate(S,b)):b in FB];
+          FM := Matrix(FL);
+          return Rank(FM) eq #FB; 
+        end function;
+       
+        function residual_polynomial_of_component(g,m)
+          rp, rho := ramification_poly(g);
+          KX<X> := Parent(rho);
+          K<Pi> := CoefficientRing(KX);
+          G, KtoG := ResidueClassField(K);
+          rhom := Evaluate(rho,Pi^m*X);
+          cont := Minimum([Valuation(a) : a in Coefficients(rhom)]);
+          rdpc := rhom div Pi^cont;
+          Sm := &+[z^i*KtoG(Coefficient(rdpc,i)): i in [0..Degree(rdpc)]];
+          return Sm;
+        end function;
+
+        // for m high enough we can set coefficients to 0       
+
+        rpslopes := LowerSlopes(rp);
+        vprint Monge,4:"Monge: slopes of ramification polygon",rpslopes; 
+        intslopes := [Floor(s):s in LowerSlopes(rp)];
+        intslopes := [Floor(s):s in rpslopes];
+        lastlev := Integers()!-Minimum(intslopes)+1;
+        h := hasse_herbrand(lastlev);
+        repeat
+          lastlev := lastlev-1;
+          prevh := h;
+          h := hasse_herbrand(lastlev);
+          Sm := residual_polynomial_of_component(f,lastlev);
+          isoSm := is_iso(Sm);
+          vprint Monge,4:"Monge: m =",lastlev,", HasseHerbrand(m) =",h," Sm is isomorphism",isoSm,":",Sm;
+        until not isoSm or not prevh-h eq 1 or lastlev eq 0;
+        //until not is_iso(Sm) or not hasse_herbrand(lastlev+1)-h eq 1 or lastlev eq 0;
+        //easystart := lastlev+1; 
+        easystart := lastlev+1+1; 
+        
+        vprint Monge,1:"Monge: easy reduction starts with m =",easystart;
+
+        function easyreduce(ff,m)
+          repeat
+            lev := hasse_herbrand(m)+n;
+            albha, i, j := f_ij(ff,m);
+            if albha ne 0 then k := discrete_log(albha); rep := R!(xi^k);
+            else rep := R!0; end if;
+            vprintf Monge,6:"Monge:   m = %o : setting phi_(%o,%o) = %o to 0\n",m,i,j,albha;
+            fnew := (ff-rep*pi^j*x^i);
+            ff := fnew;
+            m := m+1;
+            vprintf Monge,7:"Monge:   still isomorphic %o\n", IsIsomorphic(ff,f);
+          until j ge Precision(R);
+          return ff;
+        end function;
+
+        // higher reduction steps
+
+        //vprint Monge,4:"Monge: constant coefficient processed 1",M;
+        M := {easyreduce(ff,easystart):ff in M};
+        //vprint Monge,4:"Monge: constant coefficient processed 2",M;
+        for m in [1..easystart] do
+           vprintf Monge,2:"Monge: reduction with pi -> pi + theta * pi^%o\n",m;
+           new_M := {};
+//"M",m,M;
+           for ff in M do
+              eta := -RtoF(ConstantCoefficient(ff) div pi);
+              vprint Monge,2:"Monge:   reducing f =",ff;
+              fij, i, j := f_ij(ff,m);
+              vprint Monge,3:"Monge:   improving f_(",i,",",j,") =",fij;
+              Sm  := residual_polynomial_of_component(ff,m);
+              vprint Monge,3:"Monge:   Sm",Sm;
+              FL := [Eltseq(Evaluate(eta^j*Sm,b)):b in FB];
+              FM := Matrix(FL);
+              alpha := fij;
+             
+              // reduce alpha by the image of eta^j*Sm 
+              Mecho := EchelonForm(Matrix([Reverse(r): r in RowSequence(FM)]));
+              vbeta := Vector(Reverse(Eltseq(alpha)));
+              nu := 1;
+              mu := 1;
+              done := false;
+              while nu le #FB and not done do // row counter
+                while Mecho[nu][mu] eq 0 and not done do
+                  if mu lt #FB then mu := mu + 1; else done := true; end if;
+                end while;
+                if not done then
+                  vb := Vector(Mecho[nu]);
+                  ab := vbeta[mu]/vb[mu];
+                  vbeta := vbeta - ab*vb;
+                  nu := nu + 1;
+                end if;
+              end while;
+              beta := F!Reverse(Eltseq(vbeta));
+              sol, kernel  := Solution(Matrix(FM),Vector(Eltseq(alpha-beta)));
+              theta := F!Eltseq(sol);
+              vprint Monge,3:"Monge:   theta",theta;
+              Thetas := [theta+F!Eltseq(a):a in Set(Kernel(FM))];
+              vprintf Monge,3:"Monge:   thetas %o\n",Thetas;
+              new_ffs := {};
+              for theta in Thetas do
+                if theta eq 0 then
+                  Include(~new_ffs,ff);
+                else
+                  vprint Monge,3:"Monge:     reduction with pi -> pi +",theta,"* pi ^",m+1;
+                  def_ff := deformed_eisenstein(ff,m+1, (R!theta));
+                  new_ff := easyreduce(def_ff,easystart);
+                  vfij, vi, vj := f_ij(new_ff,m);
+                  vprint Monge,2:"Monge:     now f_(",vi,",",vj,") =",vfij;
+                  vprint Monge,3:"Monge:     reduced to",new_ff;
+                  vprint Monge,5:"Monge:     test", IsIsomorphic(new_ff,f);
+                  Include(~new_ffs,new_ff);
+                end if;
+              end for;
+              new_M join:= new_ffs;
+            end for;
+            M := new_M;
+          end for;
+        if distinguished then
+//"D 1";
+//"M",M;
+          return Distinguished(M);
+        else
+          return M;
+        end if;
+end intrinsic;
+
 
