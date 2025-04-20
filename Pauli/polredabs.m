@@ -666,7 +666,6 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
 // Phi(alpha) = 0
 // psi01 desired constant coefficient mod pi^2
 //"=======================================================";
-
         vprint Monge,5:"PolRedPadic: reduction of",String(Phi:nu:=nu);
         
         // these stay fixed
@@ -770,7 +769,6 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         
         new_phis := {};
         Thetas := [r[1]:r in Roots(S1eta-(phi01-psi01R))];
-//"Thetas",Thetas;
         vprintf Monge,2:"PolRedPadic:   transforming phi*_(0,1) from %o to %o\n",phi01,psi01R;
         if Thetas eq [] then
           error "PolRedPadic: reduction step slope -1 failed";
@@ -778,15 +776,10 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         for theta in Thetas do
           vprintf Monge,2:"PolRedPadic:     transformation alpha -> alpha + (%o)*nu(alpha)\n",theta;
           new_beta := alpha+(L!theta)*nualpha; 
-//"new_beta",Parent(new_beta);
-//"K",K;
           new_phi := CharacteristicPolynomial(new_beta,K);
-//"new_phi",new_phi;
           Include(~new_phis,<new_phi,new_beta>);
           vprint  Monge,2:"PolRedPadic:     now phi*_(0,1) =",RL!Evaluate(Expansion2(new_phi,nu)[1][2],L!xi);
-//"psi01R",Evaluate(Expansion2(new_phi,nu)[1][2],xi),psi01R;
-//"eval","new_phi",Parent(new_phi),"xi",Parent(xi);
-          if not RL!Evaluate(Expansion2(new_phi,nu)[1][2],L!xi) eq psi01R then
+          if not RL!Evaluate(Expansion2(new_phi,nu)[1][2],alpha) eq psi01R then
              error "PolRedPadic: reduction step m=1 failed";
           end if;
         end for;
@@ -931,7 +924,7 @@ intrinsic PolRedPadic(L::RngPad:distinguished:=true) -> .
   //Uy<y> := PolynomialRing(U);  
   pi := UniformizingElement(L);
   f := InertiaDegree(L,PrimeRing(L));
-  nu := Zpx!conway_or_jr_polynomial(p,f);
+  nu := Zpx!conway_or_jr_polynomial(Zp,f);
   gamma := Roots(Lt!nu-pi)[1][1];
 // TODO
   psi := DefiningPolynomial(L);
