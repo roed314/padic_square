@@ -105,7 +105,7 @@ intrinsic EisensteinForm(L::RngPad,K::RngPad) -> .
   A generating polynomial phi in K[x] of L in Eisenstein form along with 
   the polynomial nu generating the unramified subextensions of L/K and gamma with phi(gamma) = 0.
 }
-  vprintf Monge,3: "EisensteinForm of %o",L;
+  vprintf Monge,3: "EisensteinForm of %o\n",L;
 //"EF L",L,"K",K;
   Lt<t> := PolynomialRing(L); 
   pi := UniformizingElement(L);
@@ -666,6 +666,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
 // Phi(alpha) = 0
 // psi01 desired constant coefficient mod pi^2
 //"=======================================================";
+"PolRedPadic(Phi,nu,alpha,psi01)";
         vprint Monge,5:"PolRedPadic: reduction of",String(Phi:nu:=nu);
         
         // these stay fixed
@@ -684,6 +685,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         RKz<z> := PolynomialRing(RK);
 
         L := Parent(alpha);
+//"L.1 = alpha",L.1 eq alpha;
 //"K sub L",K eq BaseRing(L);
 
         Lt<t> := PolynomialRing(L);
@@ -771,7 +773,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         Thetas := [r[1]:r in Roots(S1eta-(phi01-psi01R))];
         vprintf Monge,2:"PolRedPadic:   transforming phi*_(0,1) from %o to %o\n",phi01,psi01R;
         if Thetas eq [] then
-          error "PolRedPadic: reduction step slope -1 failed";
+          error "PolRedPadic: reduction step slope 1 failed";
         end if;
         for theta in Thetas do
           vprintf Monge,2:"PolRedPadic:     transformation alpha -> alpha + (%o)*nu(alpha)\n",theta;
@@ -916,6 +918,7 @@ end intrinsic;
 
 intrinsic PolRedPadic(L::RngPad:distinguished:=true) -> .
 {Krasner-Monge reduced polynomial phi such that L = Zp[x]/(phi)}
+//"PolRedPadic(L)";
   p := Prime(L);
   Lt<t> := PolynomialRing(L); 
   Zp := PrimeRing(L);
@@ -953,6 +956,7 @@ end intrinsic;
 intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,relative:=false) -> .
         {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
 return the Krasner- Monge reduction of Phi}
+//"PolRedPadic(Phi,nu,alpha)";
   Kx<x> := Parent(Phi); 
   K := CoefficientRing(Phi);
 
@@ -988,6 +992,7 @@ end intrinsic;
 
 intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true) -> .
 {For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
+//"PolRedPadic(Phi,K)";
    p := Prime(K);
    vprintf Monge,2:"PolRedPadic: converting to Eisenstein form\n";
 //"PRP(P,K) EF";
@@ -995,6 +1000,12 @@ intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true) -> .
 //"K",K;
    phi, nu, alpha := EisensteinForm(Phi,K);
    vprintf Monge,2:"PolRedPadic: ramification index is %o and inertia degree is %o\n",Degree(phi)/Degree(nu),Degree(nu);
+   if IsEisenstein(phi) and not PrimeRing(K) eq K then
+     return MongeReduced(phi);
+   end if;
+   if not PrimeRing(K) eq K then
+     error "PolRedPadic: not totally ramified case over extensions not implemented yet";
+   end if;
    L := Parent(alpha);
    // psi := DefiningPolynomial(L);
    if RamificationIndex(L,K) mod p ne 0 then
@@ -1008,6 +1019,7 @@ end intrinsic;
 
 intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
 {For Phi in OK irreducible return a Krasner-Monge reduced polynomial Psi such that K[x]/(Phi)=K[x]/(Psi).}
+"PolRedPadic(Phi)";
   return PolRedPadic(Phi,CoefficientRing(Phi));
 end intrinsic;
 
