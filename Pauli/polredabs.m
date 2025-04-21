@@ -633,8 +633,8 @@ intrinsic Contraction2(L::SeqEnum,nu::RngUPolElt) -> .
   if R eq PrimeRing(R) then 
     return Rx!(&+[ &+[ p^(j-1)*L[i][j] : j in [1..#L[i]] ]*nu^(i-1) : i in [1..#L]]);
   elif Degree(nu) eq 1 then
-"p",Parent(L);
-"L",L;
+//"p",Parent(L);
+////"L",L;
     return Rx!([ &+[ p^(j-1)*Evaluate(L[i][j],R.1) : j in [1..#L[i]] ]: i in [1..#L]]);
   else
     error "not implemented yet";
@@ -751,12 +751,12 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
             //vprintf Monge,4:"PolRedPadic:   still isomorphic %o\n", HasRoot(Lt!Contraction2(nuexp,nu));
             m := m+1;
           until k gt easylimit or k ge Precision(Zp);
-"nuexp",nuexp;
+//"nuexp",nuexp;
           //until k ge Precision(Zp);
           //until k ge Precision(Zp) or m ge max_m+n;
           newphi := Contraction2(nuexp,nu);
-"newphi",newphi;
-"nuexp2",Expansion(newphi,nu);
+//"newphi",newphi;
+//"nuexp2",Expansion(newphi,nu);
           return newphi;
         end function;
        
@@ -795,13 +795,13 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
           end if;
         end for;
         M := new_phis;
-"M1",M;
+//"M1",M;
 
         // other levels
         for m in [2..easystart] do
            vprintf Monge,2:"PolRedPadic: m = %o, reduction with alpha -> alpha + theta * nu(alpha)^%o\n",m,m;
            new_M := {};
-"M",m,M;
+//"M",m,M;
            for phiandbeta in M do
               phi := phiandbeta[1]; beta := phiandbeta[2];
               nuexp2, nuexp := Expansion2(phi,nu : limit := easylimit);
@@ -861,9 +861,9 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
             end for;
             M := new_M;
           end for;
-"MM",M;        
+//"MM",M;        
         M := {easyreduce(phibeta[1]): phibeta in M};
-"M easyy",M;
+//"M easy",M;
 //"nuexp after easyreduce",[Expansion(a,nu): a in M];
         return M;
 
