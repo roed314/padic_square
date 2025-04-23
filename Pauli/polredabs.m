@@ -385,6 +385,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
       q := #Fq;
       xi := PrimitiveElement(Fq);
 
+      vprintf Monge, 2: "ResidualPolynomialDistinguished: conjugates %o\n",conjugates;  
       vprintf Monge, 4: "ResidualPolynomialDistinguished: %o with slopes %o\n",phi,slopes;  
 
         function residual_polynomial_distinguished_sub(phi);
@@ -664,9 +665,7 @@ end intrinsic;
 
 
 ///////////////////////////////////////////////////////////////
-// function pol_red_padic_sub(Phi,nu,alpha,psi01)
-intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
-{}
+function pol_red_padic_sub(Phi,nu,alpha,psi01)
 //"pol_red_padic psi01",psi01,"Parent(nu)",Parent(nu);
 // Phi in K[x]
 // nu in K[x] generates unramified subextension of L = K[x]/(Phi) = K(alpha)  
@@ -675,9 +674,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
 //"=======================================================";
 //"PolRedPadic(Phi,nu,alpha,psi01)";
         vprint Monge,5:"PolRedPadic: reduction of",String(Phi:nu:=nu);
-        
         // these stay fixed
-//"Phi",Parent(Phi);
         n := Degree(Phi);
         f := Degree(nu);
         e := n div f;
@@ -692,16 +689,13 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         RKz<z> := PolynomialRing(RK);
 
         L := Parent(alpha);
-//"L.1 = alpha",L.1 eq alpha;
-//"K sub L",K eq BaseRing(L);
 
         Lt<t> := PolynomialRing(L);
         RL, LtoRL := ResidueClassField(L);
+        Fp := BaseField(RL);
         RLs, RLstoRL := UnitGroup(RL);
         psi01R := LtoRL(psi01);
         xi := RL.1; // primitive element
-//"nu",nu,Parent(nu);
-//"alpha",alpha,Parent(alpha);
         Pi := Evaluate(Polynomial(L,nu),alpha);        
        
         function is_iso(S)
@@ -720,7 +714,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
         vprintf Monge,2: "PolRedPadic: Ramification polygon %o with slopes %o\n", LowerVertices(rp), slopes;
         intslopes := [Floor(s):s in slopes | Abs(s) lt Precision(PrimeRing(K))];
         
-        max_m := Integers()!-Minimum(intslopes)+1;
+        max_m := Integers()!-Minimum(intslopes)+2;
         m := max_m;
         Sm, pre_w := ResidualPolynomialOfComponentAbs(Phi,nu,alpha,m);
         Wm[m] := pre_w;
@@ -731,7 +725,7 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
           Sm, Wm[m] := ResidualPolynomialOfComponentAbs(Phi,nu,alpha,m);
           vprint Monge,2: "PolRedPadic: m =",m,", w(m) =",Wm[m],", Sm =",Sm;
         until not is_iso(Sm) or not Wm[m+1]-Wm[m] eq 1 or Wm[m] eq 0;
-        easystart := m+1; 
+        easystart := m+2; 
         easylimit := Wm[easystart] div e + 1;
         
         vprint Monge,1:"PolRedPadic: easy reduction starts with m =",easystart,"; i.e. modulo pi ^",easylimit;
@@ -747,27 +741,18 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
             k := wm div e;
             nuexp[i+1][k+1] := 0;
             vprintf Monge,5:"PolRedPadic:   m = %o : setting phi*_(%o,%o) = %o to 0\n",m,i,k,nuexp[i+1][k+1];
-//""; printf "PolRedPadic:   m = %o : setting phi*_(%o,%o) = %o to 0\n",m,i,k,nuexp[i+1][k+1];
-            //vprintf Monge,4:"PolRedPadic:   still isomorphic %o\n", HasRoot(Lt!Contraction2(nuexp,nu));
+            // printf "PolRedPadic:   m = %o : setting phi*_(%o,%o) = %o to 0\n",m,i,k,nuexp[i+1][k+1];
+            vprintf Monge,4:"PolRedPadic:   still isomorphic %o\n", HasRoot(Lt!Contraction2(nuexp,nu));
             m := m+1;
           until k gt easylimit or k ge Precision(Zp);
-//"nuexp",nuexp;
-          //until k ge Precision(Zp);
-          //until k ge Precision(Zp) or m ge max_m+n;
           newphi := Contraction2(nuexp,nu);
-//"newphi",newphi;
-//"nuexp2",Expansion(newphi,nu);
+          vprintf Monge,4:"PolRedPadic:   still isomorphic %o\n", HasRoot(Lt!newphi);
           return newphi;
         end function;
        
         // reduction of constant coefficient mod pi^2
         vprint Monge,2:"PolRedPadic: reduction with alpha -> alpha + theta * nu(alpha)";
-//"nu",nu;
         nuexp2, nuexp := Expansion2(Phi,nu : limit := easylimit);
-//"nuexp",nuexp;
-//"nuexp2",nuexp2;
-//"nuexp2[1][2]",nuexp2[1][2];
-//"alpha",alpha;
         phi0 := nuexp[1];
         phi0alpha := Evaluate(Lt!phi0,alpha); 
         nualpha := Evaluate(Lt!nu,alpha);
@@ -795,13 +780,12 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
           end if;
         end for;
         M := new_phis;
-//"M1",M;
 
+        //""vprintf Monge,1:"PolRedPadic: m=%o reduced are isomorphic %o\n",1,[HasRoot(Polynomial(L,psi[1])):psi in M];
         // other levels
-        for m in [2..easystart] do
+        for m in [2..easystart-1] do
            vprintf Monge,2:"PolRedPadic: m = %o, reduction with alpha -> alpha + theta * nu(alpha)^%o\n",m,m;
            new_M := {};
-//"M",m,M;
            for phiandbeta in M do
               phi := phiandbeta[1]; beta := phiandbeta[2];
               nuexp2, nuexp := Expansion2(phi,nu : limit := easylimit);
@@ -818,10 +802,19 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
 
               phisik := nuexp2[i+1][k+1];
               vprint Monge,2:"PolRedPadic:   improving phi*_(",i,",",k,") =",phisik;
-              phisikbeta := LtoRL(Evaluate(phisik,beta));
+              //G phisikbeta := LtoRL(Evaluate(phisik,beta));
+              if Degree(nu) eq 1 then
+                // Eisenstein case
+                gamma := RL.1;
+              else
+                // Eisensteinform case
+                gamma := LtoRL(beta);
+              end if;
+              phisikbeta := Evaluate(phisik,LtoRL(gamma));
               
-              FB := Basis(RL,RK);
-              FL := [Eltseq(Evaluate(eta^k*Sm,b)):b in FB];
+              //FB := Basis(RL,RK);
+              FB := Basis(RL,Fp); // !!
+              FL := [Eltseq(Evaluate(eta^k*Sm,b)):b in FB]; 
               FM := Matrix(FL);
              
               // reduce phisikbeta by the image of eta^j*Sm 
@@ -845,9 +838,9 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
               // find coefficient for reduction
               sol, kernel  := Solution(Matrix(FM),Vector(Eltseq(phisikbeta-delta)));
               theta := RL!Eltseq(sol);
-              //vprint Monge,2:"PolRedPadic:   theta",theta;
+              vprint Monge,2:"PolRedPadic:   theta",theta;
               Thetas := [theta+RL!Eltseq(a):a in Set(Kernel(FM))];
-              //vprintf Monge,2:"PolRedPadic:   thetas %o\n",Thetas;
+              vprintf Monge,2:"PolRedPadic:   thetas %o\n",Thetas;
               new_phis := {};
               for theta in Thetas do
                 vprintf Monge,2:"PolRedPadic:     transformation alpha -> alpha + (%o)*nu(alpha)^%o\n",theta,m;
@@ -860,24 +853,23 @@ intrinsic pol_red_padic_sub(Phi,nu,alpha,psi01) -> .
               new_M join:= new_phis;
             end for;
             M := new_M;
+            //vprintf Monge,1:"PolRedPadic: m=%o reduced are isomorphic %o\n",m,[HasRoot(Polynomial(L,psi[1])):psi in M];
           end for;
-//"MM",M;        
         M := {easyreduce(phibeta[1]): phibeta in M};
-//"M easy",M;
-//"nuexp after easyreduce",[Expansion(a,nu): a in M];
+        //vprintf Monge,1:"PolRedPadic: easy reduced are isomorphic %o\n",[HasRoot(Polynomial(L,psi)):psi in M];
         return M;
 
-//end function;
-end intrinsic;
+end function;
+
 
 intrinsic PolRedPadicTame(phi::RngUPolElt) -> .
-{}
+{Krasner-Monge reduction of a polynomial }
   K := CoefficientRing(phi);
   p := Prime(K);
   psi := DefiningPolynomial(K);
   e0 := Degree(phi);
   if (e0 mod p) eq 0 then
-    error "PolRedPadicTame: ";
+    error "PolRedPadicTame works for tamely ramified extensions only";
   end if;
   Kx<x> := PolynomialRing(K);
   pi := UniformizingElement(K);
@@ -956,6 +948,7 @@ intrinsic PolRedPadic(L::RngPad:distinguished:=true) -> .
   end for;
   if distinguished then
     PSI := Distinguished(M);
+    vprint Monge,2:"PolRedPadic: reduced is isomorphic is",HasRoot(Polynomial(L,PSI));
     return PSI;
   else
     return M; 
@@ -964,10 +957,11 @@ end intrinsic;
 
 
 
-intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,relative:=false) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,conjugates:=true) -> .
         {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
 return the Krasner- Monge reduction of Phi}
 //"PolRedPadic(Phi,nu,alpha)";
+//"conjugates",conjugates;
   Kx<x> := Parent(Phi); 
   K := CoefficientRing(Phi);
 
@@ -982,28 +976,34 @@ return the Krasner- Monge reduction of Phi}
   psi := DefiningPolynomial(L);
   gamma := Roots(Lt!nu-pi)[1][1];
   phi := CharacteristicPolynomial(gamma,BaseRing(U));
+  //vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): char poly isomorphic is %o\n",nu,HasRoot(Polynomial(L,phi));
   n := Degree(phi);
-  A, psis := ResidualPolynomialDistinguished(psi:conjugates := true);
+  A, psis := ResidualPolynomialDistinguished(psi:conjugates := conjugates);
   vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
   M := {};
   for psi in psis do
+    //vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): distinguished is isomorphic is %o\n",nu,HasRoot(Polynomial(L,psi));
 //"PRP(P,n,a) EF";
     thisphi, nu, thisalpha := EisensteinForm(psi,K);
+    //vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): Eisenstein form is isomorphic is %o\n",nu,HasRoot(Polynomial(L,phi));
     psi01 := Coefficient(psi,0) div p;
     newphis := pol_red_padic_sub(thisphi,Kx!nu,thisalpha,psi01);
+    //vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): reduced are isomorphic %o\n",nu,[HasRoot(Polynomial(L,psi)):psi in newphis];
     M join:= newphis;
   end for;
   if distinguished then
     PSI := Distinguished(M);
+    //vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): reduced is isomorphic is %o\n",nu,HasRoot(Polynomial(L,PSI));
     return PSI;
   else
     return M; 
   end if;
 end intrinsic;
 
-intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:=true) -> .
 {For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
 //"PolRedPadic(Phi,K)";
+//"conjugates",conjugates;
    p := Prime(K);
    vprintf Monge,2:"PolRedPadic: converting to Eisenstein form\n";
 //"PRP(P,K) EF";
@@ -1017,15 +1017,16 @@ intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true) -> .
      M := PolRedPadicTame(Phi,nu,alpha:distinguished:=distinguished);
    else
 //"phi",phi;
-     M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished);
+     M := PolRedPadic(phi,nu,alpha:distinguished:=distinguished,conjugates:=conjugates);
    end if;
    return M;
 end intrinsic;
 
-intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true,conjugates:=true) -> .
 {For Phi in OK irreducible return a Krasner-Monge reduced polynomial Psi such that K[x]/(Phi)=K[x]/(Psi).}
 //"PolRedPadic(Phi)";
-  return PolRedPadic(Phi,CoefficientRing(Phi));
+//"conjugates",conjugates;
+  return PolRedPadic(Phi,CoefficientRing(Phi):conjugates:=conjugates);
 end intrinsic;
 
 intrinsic PolRedPadic(f::RngUPolElt[RngInt],p::RngIntElt:prec:=300,distinguished:=true) -> .
@@ -1039,7 +1040,7 @@ The distinguished reduced generating polynomial of the extension generated by f 
   Zp := pAdicRing(p,prec);
   ZpX<X> := PolynomialRing(Zp);
   Phi := ZpX!f;
-  Psi := PolRedPadic(Phi,Zp: distinguished:=distinguished);
+  Psi := PolRedPadic(Phi,Zp: distinguished:=distinguished, conjugates :=true);
   F := Polynomial(Integers(),Psi);
   return Psi;
 end intrinsic;
