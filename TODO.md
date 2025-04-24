@@ -17,6 +17,7 @@
  * Make it possible to search for fields containing a given one
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
  * Review knowls (DLR)
+ * Tiny fix: On family page, when jump set is empty use "[\ ]" instead of "[]"
 
 # Issues for later
 
