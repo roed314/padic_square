@@ -12,7 +12,9 @@
    * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
  * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
  * Update other parts of the LMFDB (notably the number field pages) to use new labels.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works (this is the link to "number fields with this as the completion) (JJ)
- * Switch ramification polygon style to Santi's (DLR)
+ * Switch ramification polygon style to Santi's, deal with points above the polygon (e.g. in 2.1.16.60f1.228) (DLR)
+ * Deal with very close lines in the Eisenstein diagram (e.g. in 2.1.32.130bk) (DLR)
+ * Make it possible to search for fields containing a given one
  * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
  * Review knowls (DLR)
 
