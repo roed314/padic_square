@@ -1,7 +1,6 @@
 "Loading polredabs";
 
 
-
 function discrete_log(a)
   return Log(a);
 end function;
@@ -48,7 +47,9 @@ intrinsic unram_pol_jr(m,p) -> .
 end intrinsic;
 
 
-function conway_or_jr_polynomial(K,n)
+//function conway_or_jr_polynomial(K,n)
+intrinsic conway_or_jr_polynomial(K,n) -> . 
+{}
   if K eq PrimeRing(K) then
     p := Prime(K);
     if ExistsConwayPolynomial(p,n) then 
@@ -60,7 +61,8 @@ function conway_or_jr_polynomial(K,n)
     RK := ResidueClassField(K);
     return Polynomial(K!IrreduciblePolynomial(RK,n));
   end if;
-end function;
+//end function;
+end intrinsic;
 
 intrinsic residue_factor(phi) -> .
 {}
@@ -125,6 +127,7 @@ intrinsic EisensteinForm(L::RngPad,K::RngPad) -> .
     return phi, PolynomialRing(K).1, L.1;
   else
     nu := Polynomial(K,conway_or_jr_polynomial(PrimeRing(K),InertiaDegree(L,K)));
+//"else nu",nu;
     gamma := Roots(Lt!nu-pi:Max:=1)[1][1];
     phi := CharacteristicPolynomial(gamma,K);
     return phi, nu, gamma;
@@ -149,9 +152,11 @@ intrinsic EisensteinForm(f::RngUPolElt[RngPad],K::RngPad) -> .
     IsIrreducible(Polynomial(RL,f)) then
     U := UnramifiedExtension(L,f);
     return EisensteinForm(U,K);
-  else  
-    factors, _ ,Ls := Factorization(f:Extensions:=true); 
+  else
+    factors, _ ,Cs := Factorization(f:Certificates:=true); 
     if #factors gt 1 then error "EisensteinForm: polynomial is not irreducible"; end if;
+    U := UnramifiedExtension(L,conway_or_jr_polynomial(PrimeRing(L),Cs[1]`F));
+    factors, _ ,Ls := Factorization(Polynomial(U,f):Extensions:=true); 
     return EisensteinForm(Ls[1]`Extension,K);
   end if;
 end intrinsic;
@@ -877,14 +882,15 @@ end function;
 
 
 intrinsic PolRedPadicTame(phi::RngUPolElt) -> .
-{Krasner-Monge reduction of a polynomial }
+{Reduction of a tamely ramified polynomial }
 //"Tame";
   K := CoefficientRing(phi);
   p := Prime(K);
-  psi := DefiningPolynomial(K);
   e0 := Degree(phi);
   if (e0 mod p) eq 0 then
     error "PolRedPadicTame works for tamely ramified extensions only";
+  elif not IsEisenstein(phi) then
+    error "PolRedPadicTame works for Eisenstein polynomials only";
   end if;
   Kx<x> := PolynomialRing(K);
   pi := UniformizingElement(K);
@@ -896,11 +902,13 @@ intrinsic PolRedPadicTame(phi::RngUPolElt) -> .
   b := Gcd(e0,#U-1);
   r := l mod b;
   psi := x^e0+pi*K!(xi^r);
+  vprintf Monge,3:"PolRedPadicTame: reduced to %o\n",psi;
+  vprintf Monge,5:"PolRedPadicTame: reduced is isomorphic %o\n",IsIsomorphic(phi,psi);
 //"psi",psi;
   return psi;
 end intrinsic;
 
-intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,conjugates:=false) -> .
+intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,conjugates:="auto") -> .
 {}
 //"Tame3";
 //"Phi",Phi;
@@ -911,6 +919,15 @@ intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=tr
   Kx<x> := PolynomialRing(K);
   L := Parent(alpha);
   Ly<y> := PolynomialRing(L);
+
+  if conjugates cmpeq "auto" then 
+    if Degree(nu) eq 1 then 
+      conjugates := false;
+    else
+      conjugates := true;
+    end if;
+  end if;
+
   pi := UniformizingElement(K);
   p := Prime(L);
   phi := DefiningPolynomial(L);
@@ -945,6 +962,8 @@ intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=tr
         Psi01 := Kx!psi01coeffs;
 //"Psi01",Psi01;
         Psi := Kx!nu^e0+Psi01*p;
+        vprintf Monge,3:"PolRedPadicTame: reduced to %o\n",String(Psi);
+        vprintf Monge,5:"PolRedPadicTame: reduced is isomorphic %o\n",HasRoot(Polynomial(L,Psi));
 //"Psi",Psi; "#roots", #Roots(Ly!Psi);
         Include(~M,Psi);
       end if;
@@ -960,46 +979,8 @@ intrinsic PolRedPadicTame(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=tr
   end if;
 end intrinsic;
 
-intrinsic PolRedPadic(L::RngPad:distinguished:=true) -> .
-{Krasner-Monge reduced polynomial phi such that L = Zp[x]/(phi)}
-//"PolRedPadic(L)";
-  p := Prime(L);
-  Lt<t> := PolynomialRing(L); 
-  Zp := PrimeRing(L);
-  Zpx<x> := PolynomialRing(Zp);
-  //U := BaseRing(L);
-  //Uy<y> := PolynomialRing(U);  
-  pi := UniformizingElement(L);
-  f := InertiaDegree(L,PrimeRing(L));
-  nu := Zpx!conway_or_jr_polynomial(Zp,f);
-  gamma := Roots(Lt!nu-pi)[1][1];
-// TODO
-  psi := DefiningPolynomial(L);
-  phi := CharacteristicPolynomial(gamma,Zp);
-  n := Degree(phi);
-  A, psis := ResidualPolynomialDistinguished(psi:conjugates := true);
-  vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
-  M := {};
-  for psi in psis do
-//"PRP(L) EF";
-    thisphi, nu, thisalpha := EisensteinForm(psi);
-    psi01 := Coefficient(psi,0) div p;
-//"2";
-    newphis := pol_red_padic_sub(thisphi,Zpx!nu,thisalpha,psi01);
-    M join:= newphis;
-  end for;
-  if distinguished then
-    PSI := Distinguished(M);
-    vprint Monge,2:"PolRedPadic: reduced is isomorphic is",HasRoot(Polynomial(L,PSI));
-    return PSI;
-  else
-    return M; 
-  end if;
-end intrinsic;
 
-
-
-intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,conjugates:=true) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt,nu::RngUPolElt,alpha:distinguished:=true,conjugates:="auto") -> .
         {Phi in Zp[x] in Eisenstein Form, Phi(alpha)=0, nu(alpha) uniformizer of Qp(alpha), 
 return the Krasner- Monge reduction of Phi}
 //"PolRedPadic(Phi,nu,alpha)";
@@ -1010,6 +991,14 @@ return the Krasner- Monge reduction of Phi}
 
   L := Parent(alpha);
   Lt<t> := PolynomialRing(L); 
+
+  if conjugates cmpeq "auto" then 
+    if Degree(nu) eq 1 then 
+      conjugates := false;
+    else
+      conjugates := true;
+    end if;
+  end if;
 
   RL, LtoRL := ResidueClassField(L);
   p := Prime(L);
@@ -1047,7 +1036,8 @@ return the Krasner- Monge reduction of Phi}
   end if;
 end intrinsic;
 
-intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:=true) -> .
+
+intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:="auto") -> .
 {For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
 //"PolRedPadic(Phi,K)";
 //"conjugates",conjugates;
@@ -1070,7 +1060,7 @@ intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:=
    return M;
 end intrinsic;
 
-intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true,conjugates:=true) -> .
+intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true,conjugates:="auto") -> .
 {For Phi in OK irreducible return a Krasner-Monge reduced polynomial Psi such that K[x]/(Phi)=K[x]/(Psi).}
 //"PolRedPadic(Phi)";
 //"conjugates",conjugates;
