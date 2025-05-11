@@ -9,7 +9,7 @@ outfile := "/scratch/lf/outdisc/" * fname;
 s := Read(infile);
 abspoly, relpoly := Explode(Split(s, "|"));
 
-p, n, f, i := Explode([StringToInteger(c) : c in Split(label, ".")]);
+p, n, f, i := Explode([StringToInteger(c) : c in Split(fname, ".")]);
 prec := 4*n;
 K0 := pAdicRing(p, prec);
 K := UnramifiedExtension(K0, conway_or_jr_polynomial(K0, f));
