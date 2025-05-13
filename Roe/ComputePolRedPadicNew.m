@@ -18,34 +18,49 @@ p := StringToInteger(pieces[1]);
 n := StringToInteger(pieces[2]);
 f := StringToInteger(pieces[3]);
 ZZ := Integers();
-abspoly, relpoly := Explode(Split(Read(infile), "|"));
+relpoly := Read(infile);
+if "|" in relpoly then
+    abspoly, relpoly := Explode(Split(Read(infile), "|"));
+elif f eq 1 then
+    abspoly := relpoly;
+else
+    abspoly := ""; // set below
+end if;
 if f eq n then
     // Do nothing to abspoly, since we already have the conway_or_jr_polynomial
     abspoly := remove_whitespace(abspoly);
-    relpoly := "x - " * Sprint(p);
+    relpoly := "x-" * Sprint(p);
 else
 
     prec := 4*n;
-
     k0 := pAdicRing(p, prec);
-    R0<x> := PolynomialRing(k0);
-    abspoly := eval abspoly;
-    abspoly := PolRedPadic(abspoly);
-    Zx<x> := PolynomialRing(ZZ);
-    abspoly := sprint(Zx!abspoly);
+    Zt := PolynomialRing(ZZ);
 
-    if f eq 1 then
-        relpoly := abspoly;
-    else
+    if f ne 1 then
         k<t> := UnramifiedExtension(k0, conway_or_jr_polynomial(k0, f));
         Rrel<x> := PolynomialRing(k);
         relpoly := eval relpoly;
+    end if;
+    if abspoly cmpeq "" then // implies f != 1
+        B<b> := TotallyRamifiedExtension(k, relpoly);
+        Bx<x> := PolynomialRing(B);
+        y := Roots(Bx!DefiningPolynomial(k) - b, B)[1][1];
+        abspoly := MinimalPolynomial(y, k0);
+    else
+        R0<x> := PolynomialRing(k0);
+        abspoly := eval abspoly;
+    end if;
+    abspoly := PolRedPadic(abspoly);
+    AssignNames(~Zt, ["x"]);
+    abspoly := sprint(Zt!abspoly);
+    if f eq 1 then
+        relpoly := abspoly;
+    else
         relpoly := PolRedPadic(relpoly);
-        Zt<t> := PolynomialRing(ZZ);
         AssignNames(~Zt, ["t"]);
         Ztx<x> := PolynomialRing(Zt);
         relpoly := sprint(Ztx![Zt![ZZ!a : a in Coefficients(c)] : c in Coefficients(relpoly)]);
     end if;
 end if;
-PrintFile(outfile, Sprintf("%o|%o", abspoly, relpoly));
+PrintFile(outfile, Sprintf("%o|%o", remove_whitespace(abspoly), remove_whitespace(relpoly)));
 quit;
