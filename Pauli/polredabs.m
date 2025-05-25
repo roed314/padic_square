@@ -42,7 +42,8 @@ intrinsic unram_pol_jr(m,p) -> .
       done := true; 
     end if;
   end while;
-  return pol;
+  return Zx![a mod p:a in Coefficients(pol)];
+//return pol;
 //end function;
 end intrinsic;
 
@@ -461,7 +462,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
          base, delta := residual_polynomial_distinguished_sub(phi);
          As := residual_polynomial_phis(phi,base,delta);
          phis := [a[2]: a in As | a[1] eq As[1][1]];
-         return As[1][1],phis;
+         //return As[1][1],phis;
        else
          As := [];
          gaut, maut := AutomorphismGroup(K);
