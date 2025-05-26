@@ -380,6 +380,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
       end if;
 
       K := CoefficientRing(phi);
+      p := Prime(K);
       piK := UniformizingElement(K);
       Kx<x> := PolynomialRing(K);
       phi := ChangePrecision(phi,Precision(K));
@@ -391,6 +392,11 @@ along with the Eisenstein polynomials that yield the distinguished representativ
       Fqz<z> := PolynomialRing(Fq);
       q := #Fq;
       xi := PrimitiveElement(Fq);
+
+      // tamely ramified is easy, since the residual polynomial only depends on the degree.
+      if Valuation(Degree(phi),p) eq 0 then
+        return ResidualPolynomial(phi), [phi];
+      end if;
 
       vprintf Monge, 2: "ResidualPolynomialDistinguished: conjugates %o\n",conjugates;  
       vprintf Monge, 4: "ResidualPolynomialDistinguished: %o with slopes %o\n",phi,slopes;  
