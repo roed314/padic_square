@@ -60,14 +60,17 @@ characteristic p.}
    return corners,edges;
 end intrinsic;
 
-intrinsic Residual(f::RngUPolElt,FqAz::RngUPol) -> []
+intrinsic Residual(f::RngUPolElt,FqAz::RngUPol :type:="Ore") -> []
 {Computes the residual polynomials of the generic polynomial
 corresponding to a family of p-adic fields.  The input "f" should
-be the generic polynomial, given as a polynomial over Z_p.  The
-input "FqAz" is a polynomial ring in one variable whose
-coefficients are rational functions over F_p in the parameters
-used to define the family.  The output will be an element of
-FqAz.}
+be the generic polynomial, given as a polynomial in one variable
+over A.  Here A is a polynomial ring in several variables (viewed
+as parameters) over the ring of integers O_K of a p-adic field.
+The input "FqAz" is a polynomial ring in one variable whose
+coefficients are rational functions over F_q (the residue field of
+O_K) in the parameters used to define the family.  The output will
+be an element of FqAz.  The parameter "type" can be set to any
+value besides "Ore" to get additive residual polynomials.}
    FqA:=BaseRing(FqAz);
    p:=Characteristic(FqA);
    n:=Degree(f);
@@ -100,15 +103,27 @@ FqAz.}
       r:=#E;
       for j in [1..r] do
          pj:=-E[j][1];
+         if type eq "Ore" then
+            m:=#E;
+            slope:=(E[m][2]-E[1][2])/(E[m][1]-E[1][1]);
+            e:=Denominator(slope);
+            exp:=(E[m][1]-E[j][1]) div e;
+         else
+            exp:=pj;
+         end if;
          aj:=(E[j][2]-1) div n;
          bj:=E[j][2]-n*aj;
          newcoeff:=(Binomial(bj,pj)*coeffs[bj+1]) div pi^(aj+1);
-         rpoly:=rpoly+FqAz!(newcoeff)*(-dbar)^(-aj-1)*FqAz.1^(pj);
+         rpoly:=rpoly+FqAz!(newcoeff)*(-dbar)^(-aj-1)*FqAz.1^(exp);
       end for;
    Append(~respolys,rpoly);
    end for;
    if n ne p^k then
-      tamepoly:=(FqAz.1+1)^n-1;
+      if type eq "Ore" then
+         tamepoly:=((FqAz.1+1)^n-1) div FqAz.1^(p^k);
+      else
+         tamepoly:=(FqAz.1+1)^n-1;
+      end if;
       Insert(~respolys,1,tamepoly);
    end if;
    return respolys;
