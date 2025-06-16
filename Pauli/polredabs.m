@@ -367,7 +367,7 @@ Return 1 if A>B, -1 if A<B, 0 otherwise
   return 0;
 end intrinsic;
 
-intrinsic ResidualPolynomialDistinguished(phi::RngUPolElt:conjugates:=false) -> .
+intrinsic ResidualPolynomialDistinguished(phi::RngUPolElt:conjugates:=false,constant_first:=true) -> .
 {
 The distinguished (minimal) representative of the residual polynomial class of an Eisenstein polynomial phi
 along with the Eisenstein polynomials that yield the distinguished representative.
@@ -383,6 +383,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
       p := Prime(K);
       piK := UniformizingElement(K);
       Kx<x> := PolynomialRing(K);
+      e := Degree(phi);
       phi := ChangePrecision(phi,Precision(K));
       L<alpha> := TotallyRamifiedExtension(K,phi);
       rp, rho := RamificationPoly(phi,alpha);
@@ -401,15 +402,29 @@ along with the Eisenstein polynomials that yield the distinguished representativ
       vprintf Monge, 2: "ResidualPolynomialDistinguished: conjugates %o\n",conjugates;  
       vprintf Monge, 4: "ResidualPolynomialDistinguished: %o with slopes %o\n",phi,slopes;  
 
-        function residual_polynomial_distinguished_sub(phi);
+        function residual_polynomial_distinguished_sub(phi:constant_first:=true);
+
+          if constant_first then
+            // nice constant term takes precendence over nice residual polynomial class representative
+            phi0 := ConstantCoefficient(phi);
+            phi01 := KtoFq(phi0 div piK);
+            a := Log(phi01);
+            d, s0, _ := Xgcd(e,q-1);
+            k, b  := Quotrem(a,d);
+            t0 := (-s0 * k) mod (q-1);
+            Delta := (q-1) div d;
+            x_base := [t0];
+          else
+            Delta := 1;
+            x_base := [0];
+          end if;
+
           L<alpha> := TotallyRamifiedExtension(K,phi);
           LX<X> := PolynomialRing(L);
           slopes := Reverse([-m:m in LowerSlopes(rp)]);
           vertices := Reverse(LowerVertices(rp));
           A := ResidualPolynomial(phi);
           g := 0;
-          Delta := 1;
-          x_base := [0];
           for i in [1..#slopes] do
             n := Degree(A[i]);
             m := slopes[i];
@@ -465,7 +480,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
        end function;
 
        if not conjugates then
-         base, delta := residual_polynomial_distinguished_sub(phi);
+         base, delta := residual_polynomial_distinguished_sub(phi:constant_first:=constant_first);
          As := residual_polynomial_phis(phi,base,delta);
          phis := [a[2]: a in As | a[1] eq As[1][1]];
          //return As[1][1],phis;
@@ -482,6 +497,7 @@ along with the Eisenstein polynomials that yield the distinguished representativ
          Sort(~As,func<x,y|ResidualPolynomialCompare(x[1],y[1])>);
          vprint Monge, 2: "ResidualPolynomialDistinguished: sorted",[a[1] : a in As];  
        end if;
+       // needed when constant first ?
        philogs := [<discrete_log(KtoFq(ConstantCoefficient(a[2])/piK)),a[2]>: a in As | a[1] eq As[1][1]];
        minlog := Min([a[1] : a in philogs]);
        phis := [a[2]:a in philogs|a[1] eq minlog];
@@ -1017,7 +1033,7 @@ return the Krasner- Monge reduction of Phi}
   phi := CharacteristicPolynomial(gamma,BaseRing(U));
   vprintf Monge,1:"PolRedPadic(Phi,%o,alpha): char poly isomorphic is %o\n",nu,HasRoot(Polynomial(L,phi));
   n := Degree(phi);
-  A, psis := ResidualPolynomialDistinguished(psi:conjugates := conjugates);
+  A, psis := ResidualPolynomialDistinguished(psi:conjugates := conjugates,constant_first);
   vprint Monge,2:"PolRedPadic: ResidualPolynomialDistinguished",A;
   M := {};
 //"psis",psis;
