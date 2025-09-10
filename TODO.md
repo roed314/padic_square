@@ -1,23 +1,16 @@
 # To be done before imminent pull request
 
- * Update treatment of Swan vs Artin slopes to make it more uniform across field and family homepages and search pages by making the following changes:
-   * In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default.
- * Work on knowls
-   * [lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family
-   * [lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.
-   * In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.
-   * We need to update [lf.field.label](https://olive.lmfdb.xyz/knowledge/edit/lf.field.label) to describe the new labels, and labels for families and subfamilies.
-   * Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).
-   * Update completeness, reliability, and label knowls.
-   * Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.
- * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically
- * Update other parts of the LMFDB (notably the number field pages) to use new labels.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works (this is the link to "number fields with this as the completion) (JJ)
- * Switch ramification polygon style to Santi's, deal with points above the polygon (e.g. in 2.1.16.60f1.228) (DLR)
- * Deal with very close lines in the Eisenstein diagram (e.g. in 2.1.32.130bk) (DLR)
- * Make it possible to search for fields containing a given one
- * Refresh stats once everything computed, make sure tables go up to 16 (DLR)
- * Review knowls (DLR)
- * Tiny fix: On family page, when jump set is empty use "[\ ]" instead of "[]"
+ * Refresh stats once everything computed, make sure tables go up to 23 (DLR)
+ * Review knowls (DLR, KK)
+ * Compute packets when possible
+ * Hide packet dropdown if not available (e.g. 2.1.16.54n)
+ * Transition plan for data/code so that there are no disruptions (mostly around changing labels)
+
+ * Update other parts of the LMFDB (notably the number field pages) to use new labels -- if we transition the labels column to hold the new labels (copying the current label column to old_labels), then this will happen automatically.  Make sure https://olive.lmfdb.xyz/NumberField/?completions=5.4.1.0a1.1 works.
+ * Update completeness, source, reliability, and label knowls.
+ * Update subfield column to use new labels, make it possible to search for fields containing a given one
+ * Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
+ * Add sort options for family searches (including sort keys on base for relative families)
 
 # Issues for later
 
@@ -28,8 +21,6 @@
  * Search for families (and maybe fields) based on: slope multiplicity, slopes, heights, rams.
  * In the field search results on a family homepage, have columns for ai, bi, ci (better alignment, smaller)
  * After reloading data, fix mass and mass_stored display to use mixed fractions
- * Need ctr0 for base sorting on family, need sort counter for sorting by slopes (grouped by base and n?)
- * Add sort options for family searches (including sort keys on base for relative families)
  * Run PolRedPadic on the Find box so that users can type in any polynomial and get the corresponding p-adic field (echoing functionality for number fields)
  * Name tame fields as Q_q(nth_root(pi)) for an appropriate pi, then update the base method in family.py.  Should also name two important families of wildly ramified extensions: pth power roots of unity (subsumed by general cyclotomic fields), and pth power roots of any element in the tame subfield.
  * It would be nice to show actual automorphism group rather than just its order
@@ -38,6 +29,8 @@
  * Add a toggle to display defining polynomial of a field in Eisenstein form vs just as powers of x (analogous to homogenize/simplify for elliptic curves)
  * Commands for Sage/Magma
  * On a field homepage, add the other canonical subfields and links to field pages for fields in the tower.
+ * Add slope polygon, with dots linking to the corresponding subfields (for families, include all dots and link to corresponding relative families)
+ * Make it easier to find cyclotomic fields and nth roots of p (possibly with an unramified part)
 
 
 ## LMFDB data
@@ -121,3 +114,16 @@
  * ~~Update [lf.top_slope](https://olive.lmfdb.xyz/knowledge/show/lf.top_slope) to make clear it's referring to Artin slopes. (now called top Artin slope in the knowl, and it refers to a knowl defining Artin slopes)~~
  * ~~Add "Visible Swan slopes" to the "Invariants" section of a [field homepage](https://olive.lmfdb.xyz/padicField/2.1.16.71a1.913) and "Wild Swan slopes" to the "Invariants of the Galois closure" section.~~
  * ~~Knowl for lf.tilts only talks about rams~~
+ * ~~[lf.eisenstein_diagram](https://olive.lmfdb.xyz/knowledge/edit/lf.eisenstein_diagram) - Explaining all the features of the Eisenstein diagram and how it connects to the invariants of the family~~
+ * ~~In [lf.slope_content](https://olive.lmfdb.xyz/knowledge/edit/lf.slope_content) we need to clarify whether we are talking about Swan or Artin slopes.~~
+ * ~~Update [lf.visible_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.visible_slopes) to link to [lf.hidden_slopes](https://olive.lmfdb.xyz/knowledge/show/lf.hidden_slopes).~~
+ * ~~In "Fields" section of family homepage, add "Visible Swan slopes" and "Swan slope content" columns, hidden by default.~~
+ * ~~Clarify difference (in knowls) between mass and absolute mass in cases where f is not 1 (e.g. [here](https://olive.lmfdb.xyz/padicField/family/2.2.8.54a)).  Also relevant for mass vs mass stored columns in family search results.~~
+ * ~~[lf.family_ambiguity](https://olive.lmfdb.xyz/knowledge/edit/lf.family_ambiguity) and [lf.family_mass](https://olive.lmfdb.xyz/knowledge/edit/lf.family_mass) need updating (the first should be the definition in 3.5 for the ambiguity of I/K, and the second should include formulas for relative and absolute mass.~~
+ * ~~Add related object: relative families containing this field~~
+ * ~~Handle "None" in packet column on family homepage better~~
+ * ~~Link from family count table broken (https://olive.lmfdb.xyz/padicField/?search_type=FamilyCounts, p=3, n=18).  Also, count is wrong?~~
+ * ~~Switch ramification polygon style to Santi's, deal with points above the polygon (e.g. in 2.1.16.60f1.228)~~
+ * ~~Move shading above ramification polygon, keep axis and slope labels, add points above for indices of inseparability~~
+ * ~~Deal with very close lines in the Eisenstein diagram (e.g. in 2.1.32.130bk)~~
+ * ~~Fix parameterization of residual polynomial on ramification polygon picture~~

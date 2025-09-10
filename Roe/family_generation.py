@@ -1,5 +1,5 @@
 from sage.all import euler_phi, lazy_attribute, point, line, polygon, frac, floor, lcm, mod, cartesian_product_iterator, ZZ, QQ, PolynomialRing, OrderedPartitions, srange, prime_range, prime_pi, next_prime, previous_prime, gcd, conway_polynomial, GF, binomial, cached_function, infinity, latex
-from sage.databases.cremona import cremona_letter_code
+from sage.databases.cremona import cremona_letter_code, class_to_int
 from lmfdb import db
 from lmfdb.galois_groups.transitive_group import knowl_cache, transitive_group_display_knowl
 from flask import url_for
@@ -8,13 +8,16 @@ from collections import defaultdict, Counter
 import itertools
 import re
 import os
-FAMILY_RE = re.compile(r'(\d+(?:\.\d+\.\d+\.\d+)?)-(?:(\d+)\.(\d+(?:_\d+)*))?')
+FAMILY_RE = re.compile(r'\d+\.\d+\.\d+\.\d+([a-z]+)(?:(\d+)\.(\d+)-\d+\.\d+\.\d+[a-z]+)?')
 
 columns = [
     ("label", "text"),
     ("ctr", "smallint"),
     ("base", "text"),
     ("base_aut", "smallint"),
+    ("ctr0", "integer"),
+    ("ctr0_family", "integer"),
+    ("ctr0_subfamily", "integer"),
     ("e0", "smallint"),
     ("e", "smallint"),
     ("e_absolute", "smallint"),
@@ -55,7 +58,7 @@ columns = [
     ("top_slope", "double precision"),
 ]
 
-cache_cols = ["p", "e", "f", "c", "family", "packet", "label", "new_label", "coeffs", "galT", "galois_label", "galois_degree", "slopes", "ind_of_insep", "associated_inertia", "t", "u", "aut", "visible", "hidden", "subfield", "residual_polynomials", "rf"]
+cache_cols = ["p", "e", "f", "c", "family", "packet", "label", "new_label", "coeffs", "galT", "galois_label", "galois_degree", "slopes", "ind_of_insep", "associated_inertia", "t", "u", "aut", "visible", "hidden", "subfield", "residual_polynomials", "distinguished_residual_polynomials", "rf"]
 def cache_key(rec):
     return rec["p"], rec["f"], rec["e"], rec["visible"]
 
@@ -277,15 +280,17 @@ def write_col(family, col, typ):
 
 def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, field_data=None):
     # All absolute basepairs should come before relative basepairs, and the absolute basepair corresponding to every relative basepair present must be included.
+    # This should be called twice: once with absolute base pairs (which sets labels correctly), the resulting labelfile should be used to update db.lf_fields, then field_cache and field_data should be reset and this should be called again, at which point the output famfile can be used to reload db.lf_families
     if field_cache is None or field_data is None:
         field_cache, field_data = get_caches()
     Ztz = PolynomialRing(PolynomialRing(ZZ, "t"), "z")
+    Zx = PolynomialRing(ZZ, "x")
     absolute_lookup = {}
     with open(famfile, "w") as Ffam:
         _ = Ffam.write("|".join(col for (col,typ) in columns) + "\n")
         _ = Ffam.write("|".join(typ for (col,typ) in columns) + "\n\n")
         with open(labelfile, "w") as Flab:
-            _ = Flab.write("label|family|subfamily|new_label\ntext|text|text|text\n\n")
+            _ = Flab.write("label|family|subfamily|new_label|packet|packet_size|hidden|ctr|ctr_family|ctr_subfamily\ntext|text|text|text|text|integer|text|integer|integer|integer\n\n")
             with open(corfile, "w") as Fcor:
                 _ = Fcor.write("family|field\ntext|text\n\n")
                 for family in get_db_families(basepairs, field_cache, field_data):
@@ -293,25 +298,68 @@ def write_db_families(famfile, labelfile, corfile, basepairs, field_cache=None, 
                     if family.n0 == 1:
                         #fields = sorted(family.fields, key=family.field_sort_key)
                         fields = family.fields
-                        respoly = sorted((tuple(Ztz(f) for f in rec["residual_polynomials"]), i) for (i, rec) in enumerate(fields))
+                        respoly = sorted((tuple(Ztz(f) for f in rec["distinguished_residual_polynomials"]), family.field_sort_key(Zx(rec["coeffs"])), i) for (i, rec) in enumerate(fields))
                         subctr = 0
                         sublook = {}
+                        by_hidden = defaultdict(lambda: defaultdict(lambda: defaultdict(list)))
                         prev = None
-                        for ftup, i in respoly:
+                        for ftup, skey, i in respoly:
                             rec = fields[i]
                             if ftup != prev:
                                 prev = ftup
                                 sublook[ftup] = subctr
                                 subctr += 1
                                 ctr = 1
-                            rec["subfamily"] = f"{family.label}{subctr}"
+                            rec["subfamily"] = sfam = f"{family.label}{subctr}"
+                            if rec["hidden"] is None:
+                                rec["hidden"] = r"\N"
+                                hid = None
+                            else:
+                                rec["hidden"] = rec["hidden"].replace(" ", "")
+                                hid, tu = rec["hidden"][1:].split("]")
+                                if hid == "":
+                                    hid = ()
+                                else:
+                                    hid = tuple(QQ(x) for x in hid.split(","))
+                                if "^" in tu:
+                                    u = int(re.search(r"\^\{?(\d+)", tu).group(1))
+                                else:
+                                    u = 1
+                                if "_" in tu:
+                                    t = int(re.search(r"_\{?(\d+)", tu).group(1))
+                                else:
+                                    t = 1
+                                hid += (t, u)
+                            by_hidden[sfam][rec["galT"]][hid].append(rec)
+                            rec["ctr"] = ctr
+                            rec["ctr_subfamily"] = subctr
+                            rec["ctr_family"] = family.ctr
                             rec["new_label"] = f"{family.label}{subctr}.{ctr}"
                             ctr += 1
+                        packet_count = 0
+                        for sfam, D in by_hidden.items():
+                            if None in D or any(None in v for v in D.values()):
+                                # There is some field in this subfamily where hidden info has not been computed
+                                packet_count = None
+                                continue
+                            for galT, C in D.items():
+                                for hctr, hid in enumerate(sorted(C)):
+                                    for rec in C[hid]:
+                                        rec["packet"] = f"{sfam}.{galT}{cremona_letter_code(hctr)}"
+                                        rec["packet_size"] = len(C[hid])
+                                    if packet_count is not None:
+                                        packet_count += 1
                         for rec in fields:
-                            _ = Flab.write(f"{rec['label']}|{family.label}|{rec['subfamily']}|{rec['new_label']}\n")
+                            packet = rec.get("packet")
+                            if packet is None or packet == "None":
+                                packet = r"\N"
+                            packet_size = rec.get("packet_size", r"\N")
+                            _ = Flab.write(f"{rec['label']}|{family.label}|{rec['subfamily']}|{rec['new_label']}|{packet}|{packet_size}|{rec['hidden']}|{rec['ctr']}|{rec['ctr_family']}|{rec['ctr_subfamily']}\n")
                         family.label_absolute = absolute_lookup[key] = family.label
+                        family.packet_count = packet_count
                     else:
                         family.label_absolute = absolute_lookup[key]
+                        family.packet_count = None
                     for rec in family.fields:
                         _ = Fcor.write(f"{family.label}|{rec['new_label']}\n")
                     _ = Ffam.write("|".join(write_col(family, col, typ) for (col,typ) in columns) + "\n")
@@ -517,7 +565,7 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def dots(self):
-        p, e, f, w = self.p, self.e, self.f, self.w
+        p, e, f, w = self.p, self.e, self.f_absolute, self.w
         # We include a large dot at the origin exactly when there is a tame part
         dots = [("d", 0, 0, gcd(p**f - 1, self.etame) > 1)]
         sigma = ZZ(1)
@@ -553,6 +601,21 @@ class pAdicSlopeFamily:
                 # B-point: blue circle
                 dots.append(("b", i, j, True))
         return dots
+
+    @lazy_attribute
+    def poly_count(self):
+        c = 1
+        q = self.p**self.f_absolute
+        for code, i, j, big in self.dots:
+            if code == "b":
+                c *= q
+            elif code == "c" and big:
+                c *= q # could be improved
+            elif code == "a":
+                c *= (q-1)
+            elif code == "d":
+                c *= gcd(q-1, self.etame)
+        return c
 
     @lazy_attribute
     def poly(self):
@@ -803,9 +866,36 @@ class pAdicSlopeFamily:
         #return f"{m.floor()} {latex(m-m.floor())}"
 
     @lazy_attribute
+    def ctr0_family(self):
+        # ctr_family for the base field
+        a, b, c = FAMILY_RE.fullmatch(self.label).groups()
+        if b is None:
+            # absolute label
+            return 0
+        return class_to_int(a)
+
+    @lazy_attribute
+    def ctr0_subfamily(self):
+        # ctr_subfamily for the base field
+        a, b, c = FAMILY_RE.fullmatch(self.label).groups()
+        if b is None:
+            # absolute label
+            return 1
+        return int(b)
+
+    @lazy_attribute
+    def ctr0(self):
+        # ctr for the base field
+        a, b, c = FAMILY_RE.fullmatch(self.label).groups()
+        if b is None:
+            # absolute label
+            return 1
+        return int(c)
+
+    @lazy_attribute
     def ambiguity(self):
-        p, f, etame, gamma = self.p, self.f, self.etame, self.gamma
-        q = p**f
+        p, f, fabs, etame, gamma = self.p, self.f, self.f_absolute, self.etame, self.gamma
+        q = p**fabs
         return gcd(q-1, etame) * f * p**gamma
 
     @lazy_attribute
@@ -998,7 +1088,7 @@ class pAdicSlopeFamily:
     @lazy_attribute
     def field_sort_key(self):
         assert self.n0 == 1
-        p, f, e, nu = self.p, self.f, self.e, self.nu
+        p, f, e = self.p, self.f, self.e
         def sort_key(poly):
             # poly should be in Eisenstein form with respect to self.nu
             if e == 1:
@@ -1007,13 +1097,16 @@ class pAdicSlopeFamily:
             if f > 1:
                 vec = []
                 while poly.degree() > 0:
-                    poly, r = poly.quo_rem(nu)
+                    poly, r = poly.quo_rem(self.nu)
                     assert r % p == 0
                     vec.extend([r[j] // p for j in range(f)])
             else:
                 assert all(c % p == 0 for c in list(poly)[:-1])
                 vec = [c // p for c in list(poly)[:-1]]
-            krasner_bound = (e * self.slopes[-1]).floor()
+            if not self.slopes:
+                krasner_bound = 0
+            else:
+                krasner_bound = (e * self.slopes[-1]).floor()
             i = 0
             ans = [0 for _ in range(f*(krasner_bound + 1))]
             while i <= krasner_bound:
@@ -1031,7 +1124,7 @@ class pAdicSlopeFamily:
 
     @lazy_attribute
     def packet_count(self):
-        if self.mass_absolute != self.mass_stored or any("packet" not in rec for rec in self.fields):
+        if self.mass_absolute != self.mass_stored or any(rec.get("packet") is None for rec in self.fields):
             return r"\N"
         return len(set(rec["packet"] for rec in self.fields))
 
