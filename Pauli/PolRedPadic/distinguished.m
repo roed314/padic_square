@@ -1,11 +1,20 @@
+/*
+Copyright 2025 by Sebastian Pauli
+
+This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+
+This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with this program. If not, see
+ <https://www.gnu.org/licenses/>.
+*/
+
 //////////////////////////////////////////////////////////////////////
 // Distinguished Defining Polynomials for Extensions of p-Adic Fields
 //
 // Main function is PolRedPadic
 //
 // see Guardia, Jones, Keating, Pauli, and Roe, Distinguished Defining Polynomials for Extensions of p-Adic Fields, 2025
-//
-// By Sebastian Pauli, December 2025
 //
 
 
@@ -109,10 +118,6 @@ psi is minimal and only afterwards the residual polynomials are minimized.
             x_base := [0];
           end if;
 
-          //L<alpha> := TotallyRamifiedExtension(K,phi);
-          //LX<X> := PolynomialRing(L);
-          //slopes := Reverse([-m:m in LowerSlopes(rp)]);
-          //vertices := Reverse(LowerVertices(rp));
           A := ResidualPolys(phi);
           g := 0;
           for i in [1..#slopes] do
@@ -172,8 +177,6 @@ psi is minimal and only afterwards the residual polynomials are minimized.
        if not conjugates then
          base, delta := residual_polynomial_distinguished_sub(phi:constant_first:=constant_first);
          As := residual_polynomial_phis(phi,base,delta);
-         phis := [a[2]: a in As | a[1] eq As[1][1]];
-         //return As[1][1],phis;
        else
          As := [];
          gaut, maut := AutomorphismGroup(K);
@@ -184,9 +187,8 @@ psi is minimal and only afterwards the residual polynomials are minimized.
            base, delta := residual_polynomial_distinguished_sub(tauphi);
            As cat:= residual_polynomial_phis(tauphi,base,delta);
          end for;           
-         Sort(~As,func<x,y|ResidialPolyCompare(x[1],y[1])>);
        end if;
-       // needed when constant first ?
+       Sort(~As,func<x,y|ResidialPolyCompare(x[1],y[1])>);
        philogs := [<discrete_log(KtoFq(ConstantCoefficient(a[2])/piK)),a[2]>: a in As | a[1] eq As[1][1]];
        minlog := Min([a[1] : a in philogs]);
        phis := [a[2]:a in philogs|a[1] eq minlog];
@@ -298,7 +300,7 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
        
         rp, rho := RamificationPoly(Phi,nu,alpha);
 
-        slopes := LowerSlopes(rp); // slopes := slopes[2..#slopes]; // remove infinite slope
+        slopes := LowerSlopes(rp); 
         slopes := [s : s in slopes | Abs(s) lt Precision(PrimeRing(K))];
         vprintf Monge,1: "PolRedPadic: Ramification polygon %o with slopes %o\n", LowerVertices(rp), slopes;
 	maxslope := Max(slopes); 
@@ -306,21 +308,17 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
         Smax, PHImax := AdditiveResidualPoly(Phi,nu,alpha,easystart-1);
 	easylimit := PHImax div e + 1;
 	
-// TODO: actually use precision
         vprintf Monge,1:"PolRedPadic: easy reduction starts with m=%o, using a preision of %o\n",easystart,easylimit;
  
         function easyreduce(phi)
           m := easystart;
           nuexp := Expansion2(phi,nu : limit := easylimit);
           repeat
-            //def, wm := IsDefined(Wm,m);
-            //if not def then wm := Wm[max_m]+m-max_m; end if;
 	    wm := PHImax+m-easystart; 
 	    i := wm mod e;
             k := wm div e;
             nuexp[i+1][k+1] := 0;
             vprintf Monge,6:"PolRedPadic: easy m=%o setting phi*_(%o,%o)=%o to 0\n",m,i,k,nuexp[i+1][k+1];
-            // printf "PolRedPadic:   m = %o : setting phi*_(%o,%o) = %o to 0\n",m,i,k,nuexp[i+1][k+1];
             vprintf Monge,6:"PolRedPadic: easy m=%o still isomorphic %o\n",m,HasRoot(Lt!Contraction2(nuexp,nu));
             m := m+1;
           until k gt easylimit or k ge Precision(Zp);
@@ -392,7 +390,6 @@ function pol_red_padic_sub(Phi,nu,alpha,psi01)
 
               phisik := nuexp2[i+1][k+1];
               vprintf Monge,2:"PolRedPadic: m=%o improving phi*_(%o,%o)=%o\n",m,i,k,phisik;
-              //G phisikbeta := LtoRL(Evaluate(phisik,beta));
               if Valuation(beta) eq 0 then
                 gamma := LtoRL(beta);
               else
@@ -563,13 +560,10 @@ return the Krasner- Monge reduction of Phi}
   vprintf Monge,4:"PolRedPadic(Phi,%o,alpha): char poly isomorphic is %o\n",nu,HasRoot(Polynomial(L,phi));
   n := Degree(phi);
   A, psis := ResidualPolyDistinguished(psi:conjugates := conjugates,constant_first);
-  //vprint Monge,2:"ResidualPolyDistinguished: ",A, [String(psi:wherenu):psi in psis];
   M := {};
   for psi in psis do
-    //vprintf Monge,4: "ResidualPolyDistinguished: tau(phi) = %o\n" ,String(psi:wherenu);
     vprintf Monge,5:"PolRedPadic(Phi,%o,alpha): distinguished is isomorphic is %o\n",nu,HasRoot(Polynomial(L,psi));
     thisphi, nu, thisalpha := OysteinPoly(psi,K);
-    //vprintf Monge,5:"PolRedPadic(Phi,%o,alpha): Oystein polynomial is isomorphic is %o\n",nu,HasRoot(Polynomial(L,phi));
     psi01 := Coefficient(psi,0) div p;
     newphis := pol_red_padic_sub(thisphi,Kx!nu,thisalpha,psi01);
     vprintf Monge,5:"PolRedPadic(Phi,%o,alpha): reduced are isomorphic %o\n",nu,[HasRoot(Polynomial(L,psi)):psi in newphis];
@@ -586,13 +580,13 @@ end intrinsic;
 
 
 intrinsic PolRedPadic(Phi::RngUPolElt,K::RngPad:distinguished:=true,conjugates:="auto") -> .
-{For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).}
+{For Phi in O_L irreducible return a Krasner-Monge reduced polynomial Psi such that L[x]/(Phi)=K[x]/(Psi).
+Phi must be defined over Zp and or define a totally ramified extension over an unramified extensions of Zp.}
    p := Prime(K);
    vprintf Monge,2:"PolRedPadic: converting to Oystein polynomial\n";
    phi, nu, alpha := OysteinPoly(Phi,K);
    vprintf Monge,2:"PolRedPadic: ramification index is %o and inertia degree is %o\n",Degree(phi)/Degree(nu),Degree(nu);
    L := Parent(alpha);
-   // psi := DefiningPolynomial(L);
    if RamificationIndex(L,K) mod p ne 0 then
      M := PolRedPadicTame(phi,nu,alpha:distinguished:=distinguished,conjugates:=conjugates);
    else
@@ -603,7 +597,7 @@ end intrinsic;
 
 intrinsic PolRedPadic(Phi::RngUPolElt:distinguished:=true,conjugates:="auto") -> .
 {For Phi in OK irreducible return a Krasner-Monge reduced polynomial Psi such that K[x]/(Phi)=K[x]/(Psi).}
-  return PolRedPadic(Phi,CoefficientRing(Phi):conjugates:=conjugates);
+return PolRedPadic(Phi,CoefficientRing(Phi):conjugates:=conjugates,distinguished:=distinguished);
 end intrinsic;
 
 intrinsic PolRedPadic(f::RngUPolElt[RngInt],p::RngIntElt:prec:=300,distinguished:=true) -> .
@@ -618,8 +612,8 @@ The distinguished reduced generating polynomial of the extension generated by f 
   ZpX<X> := PolynomialRing(Zp);
   Phi := ZpX!f;
   Psi := PolRedPadic(Phi,Zp: distinguished:=distinguished, conjugates :=true);
-  F := Polynomial(Integers(),Psi);
-  return Psi;
+  F := Parent(f)!Psi;
+  return F;
 end intrinsic;
 
 
